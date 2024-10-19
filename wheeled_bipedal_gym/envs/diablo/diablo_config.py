@@ -149,7 +149,7 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class rewards(WheeledBipedalCfg.rewards):
 
-        class scales:
+        class scales(WheeledBipedalCfg.rewards.scales):
             tracking_lin_vel = 1.0
             tracking_lin_vel_enhance = 1
             tracking_ang_vel = 1.0
@@ -187,7 +187,7 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class normalization(WheeledBipedalCfg.normalization):
 
-        class obs_scales:
+        class obs_scales(WheeledBipedalCfg.normalization.obs_scales):
             lin_vel = 10.0
             ang_vel = 0.25
             dof_pos = 1.0
@@ -203,7 +203,7 @@ class DiabloCfg(WheeledBipedalCfg):
         add_noise = True
         noise_level = 0.5  # scales other values
 
-        class noise_scales:
+        class noise_scales(WheeledBipedalCfg.noise.noise_scales):
             dof_pos = 0.1
             dof_vel = 1.5
             lin_vel = 0.1
