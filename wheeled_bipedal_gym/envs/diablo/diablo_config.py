@@ -32,11 +32,12 @@ from wheel_legged_gym.envs.base.base_config import BaseConfig
 
 
 class DiabloCfg(BaseConfig):
+
     class env:
         num_envs = 4096
         num_observations = 27
         num_privileged_obs = (
-                num_observations + 7 * 11 + 3 + 6 * 5 + 3 + 3
+            num_observations + 7 * 11 + 3 + 6 * 5 + 3 + 3
         )  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         obs_history_length = 5  # number of observations stacked together
         obs_history_dec = 1
@@ -181,6 +182,7 @@ class DiabloCfg(BaseConfig):
         delay_ms_range = [0, 10]
 
     class rewards:
+
         class scales:
             tracking_lin_vel = 1.0
             tracking_lin_vel_enhance = 1
@@ -218,6 +220,7 @@ class DiabloCfg(BaseConfig):
         max_contact_force = 100.0  # forces above this value are penalized
 
     class normalization:
+
         class obs_scales:
             lin_vel = 10.0
             ang_vel = 0.25
@@ -270,7 +273,7 @@ class DiabloCfg(BaseConfig):
             )
 
 
-class DiabloASMCfgPPO(BaseConfig):
+class DiabloCfgPPO(BaseConfig):
     seed = 1
     runner_class_name = "OnPolicyRunner"
 
@@ -281,9 +284,8 @@ class DiabloASMCfgPPO(BaseConfig):
         activation = "elu"  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
 
         # only for ActorCriticSequence
-        num_encoder_obs = (
-                DiabloASMCfg.env.obs_history_length * DiabloASMCfg.env.num_observations
-        )
+        num_encoder_obs = (DiabloCfg.env.obs_history_length *
+                           DiabloCfg.env.num_observations)
         latent_dim = 3  # at least 3 to estimate base linear velocity
         encoder_hidden_dims = [128, 64]
 
