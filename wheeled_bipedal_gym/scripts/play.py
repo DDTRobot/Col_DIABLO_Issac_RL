@@ -28,7 +28,7 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
-from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR
+from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR
 import os
 
 import isaacgym
@@ -77,7 +77,7 @@ def play(args):
     # export policy as a jit module (used to run it from C++)
     if EXPORT_POLICY:
         path = os.path.join(
-            wheeled_bipedal_gym_ROOT_DIR,
+            WHEELED_BIPEDAL_GYM_ROOT_DIR,
             "logs",
             train_cfg.runner.experiment_name,
             "exported",
@@ -130,7 +130,7 @@ def play(args):
         if RECORD_FRAMES:
             if i % 2:
                 filename = os.path.join(
-                    wheeled_bipedal_gym_ROOT_DIR,
+                    WHEELED_BIPEDAL_GYM_ROOT_DIR,
                     "logs",
                     train_cfg.runner.experiment_name,
                     "exported",

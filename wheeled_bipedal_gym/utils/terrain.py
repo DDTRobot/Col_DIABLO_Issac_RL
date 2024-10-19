@@ -33,11 +33,11 @@ from numpy.random import choice
 from scipy import interpolate
 
 from isaacgym import terrain_utils
-from wheeled_bipedal_gym.envs.base.legged_robot_config import LeggedRobotCfg
+from wheeled_bipedal_gym.envs.diablo.diablo_config import DiabloCfg
 
 
 class Terrain:
-    def __init__(self, cfg: LeggedRobotCfg.terrain, num_robots) -> None:
+    def __init__(self, cfg: DiabloCfg.terrain, num_robots) -> None:
 
         self.cfg = cfg
         self.num_robots = num_robots

@@ -39,7 +39,7 @@ import ntpath
 from wheeled_bipedal_gym.rsl_rl.env.vec_env import VecEnv
 from wheeled_bipedal_gym.rsl_rl.runners.on_policy_runner import OnPolicyRunner
 
-from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR, wheeled_bipedal_gym_ENVS_DIR
+from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR, WHEELED_BIPEDAL_GYM_ROOT_DIR, WHEELED_BIPEDAL_GYM_ENVS_DIR
 from .helpers import (
     get_args,
     update_cfg_from_args,
@@ -48,9 +48,9 @@ from .helpers import (
     set_seed,
     parse_sim_params,
 )
-from wheeled_bipedal_gym.envs.base.legged_robot_config import (
-    LeggedRobotCfg,
-    LeggedRobotCfgPPO,
+from wheeled_bipedal_gym.envs.base.wheeled_bipedal_config import (
+    WheeledBipedalCfg,
+    WheeledBipedalCfgPPO,
 )
 
 
@@ -61,11 +61,11 @@ class TaskRegistry:
         self.train_cfgs = {}
 
     def register(
-        self,
-        name: str,
-        task_class: VecEnv,
-        env_cfg: LeggedRobotCfg,
-        train_cfg: LeggedRobotCfgPPO,
+            self,
+            name: str,
+            task_class: VecEnv,
+            env_cfg: WheeledBipedalCfg,
+            train_cfg: WheeledBipedalCfgPPO,
     ):
         self.task_classes[name] = task_class
         self.env_cfgs[name] = env_cfg
@@ -74,35 +74,35 @@ class TaskRegistry:
     def get_task_class(self, name: str) -> VecEnv:
         return self.task_classes[name]
 
-    def get_cfgs(self, name) -> Tuple[LeggedRobotCfg, LeggedRobotCfgPPO]:
+    def get_cfgs(self, name) -> Tuple[WheeledBipedalCfg, WheeledBipedalCfgPPO]:
         train_cfg = self.train_cfgs[name]
         env_cfg = self.env_cfgs[name]
         # copy seed
         env_cfg.seed = train_cfg.seed
         return env_cfg, train_cfg
 
-    def save_cfgs(self, name) -> Tuple[LeggedRobotCfg, LeggedRobotCfgPPO]:
+    def save_cfgs(self, name) -> Tuple[WheeledBipedalCfg, WheeledBipedalCfgPPO]:
         os.mkdir(self.log_dir)
 
         save_items = [
             os.path.join(
                 self.log_dir,
-                wheeled_bipedal_gym_ENVS_DIR + "/base/legged_robot.py",
-            ),
+                WHEELED_BIPEDAL_GYM_ENVS_DIR + "/base/wheeled_bipedal.py",
+                ),
             os.path.join(
                 self.log_dir,
-                wheeled_bipedal_gym_ENVS_DIR + "/base/legged_robot_config.py",
-            ),
+                WHEELED_BIPEDAL_GYM_ENVS_DIR + "/base/wheeled_bipedal_config.py",
+                ),
             os.path.join(
                 self.log_dir,
-                wheeled_bipedal_gym_ENVS_DIR
+                WHEELED_BIPEDAL_GYM_ENVS_DIR
                 + "/{}/".format(name)
                 + "{}_config.py".format(name),
-            ),
+                ),
         ]
         py_root = os.path.join(
-            wheeled_bipedal_gym_ENVS_DIR + "/{}/".format(name) + "{}.py".format(name),
-        )
+            WHEELED_BIPEDAL_GYM_ENVS_DIR + "/{}/".format(name) + "{}.py".format(name),
+            )
         if os.path.exists(py_root):
             save_items.append(os.path.join(self.log_dir, py_root))
         if save_items is not None:
@@ -110,7 +110,7 @@ class TaskRegistry:
                 base_file_name = ntpath.basename(save_item)
                 copyfile(save_item, self.log_dir + "/" + base_file_name)
 
-    def make_env(self, name, args=None, env_cfg=None) -> Tuple[VecEnv, LeggedRobotCfg]:
+    def make_env(self, name, args=None, env_cfg=None) -> Tuple[VecEnv, WheeledBipedalCfg]:
         """Creates an environment either from a registered namme or from the provided config file.
 
         Args:
@@ -152,8 +152,8 @@ class TaskRegistry:
         return env, env_cfg
 
     def make_alg_runner(
-        self, env, name=None, args=None, train_cfg=None, log_root="default"
-    ) -> Tuple[OnPolicyRunner, LeggedRobotCfgPPO]:
+            self, env, name=None, args=None, train_cfg=None, log_root="default"
+    ) -> Tuple[OnPolicyRunner, WheeledBipedalCfgPPO]:
         """Creates the training algorithm  either from a registered namme or from the provided config file.
 
         Args:
@@ -189,7 +189,7 @@ class TaskRegistry:
 
         if log_root == "default":
             log_root = os.path.join(
-                wheeled_bipedal_gym_ROOT_DIR,
+                WHEELED_BIPEDAL_GYM_ROOT_DIR,
                 "logs",
                 train_cfg.runner.experiment_name,
             )
@@ -201,7 +201,7 @@ class TaskRegistry:
                 + "_"
                 + train_cfg.runner.run_name
                 + args.exptid,
-            )
+                )
         elif log_root is None:
             self.log_dir = None
         else:
@@ -211,7 +211,7 @@ class TaskRegistry:
                 + "_"
                 + train_cfg.runner.run_name
                 + args.exptid,
-            )
+                )
 
         train_cfg_dict = class_to_dict(train_cfg)
         runner = OnPolicyRunner(

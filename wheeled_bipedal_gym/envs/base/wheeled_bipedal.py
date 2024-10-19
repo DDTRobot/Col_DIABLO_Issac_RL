@@ -29,7 +29,7 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 from networkx.algorithms.tournament import tournament_matrix
 
-from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR, envs
+from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR, envs
 from time import time
 from warnings import WarningMessage
 import numpy as np
@@ -42,7 +42,7 @@ import torch
 from torch import Tensor
 from typing import Tuple, Dict
 
-from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR
+from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR
 from wheeled_bipedal_gym.envs.base.base_task import BaseTask
 from wheeled_bipedal_gym.utils.terrain import Terrain
 from wheeled_bipedal_gym.utils.math import (
@@ -51,12 +51,13 @@ from wheeled_bipedal_gym.utils.math import (
     torch_rand_sqrt_float,
 )
 from wheeled_bipedal_gym.utils.helpers import class_to_dict
-from wheeled_bipedal_gym.envs.base.legged_robot_config import LeggedRobotCfg
+from wheeled_bipedal_gym.envs.base.wheeled_bipedal_config import (
+    WheeledBipedalCfg
+)
 
+class WheeledBipedal(BaseTask):
 
-class Diablo(BaseTask):
-
-    def __init__(self, cfg: LeggedRobotCfg, sim_params, physics_engine,
+    def __init__(self, cfg: WheeledBipedalCfg, sim_params, physics_engine,
                  sim_device, headless):
         """Parses the provided config file,
             calls create_sim() (which creates, simulation, terrain and environments),
@@ -160,8 +161,7 @@ class Diablo(BaseTask):
             dim=1,
         )
 
-        self.L0, self.theta0 = self.forward_kinematics(self.theta1,
-                                                       self.theta2)
+        self.L0, self.theta0 = self.forward_kinematics()
         self.L0_dot, self.theta0_dot = self.calculate_vmc_vel()
 
     def post_physics_step(self):
@@ -207,12 +207,12 @@ class Diablo(BaseTask):
         if self.viewer and self.enable_viewer_sync and self.debug_viz:
             self._draw_debug_vis()
 
-    def forward_kinematics(self, theta1, theta2):
+    def forward_kinematics(self):
         end_x = (self.cfg.asset.offset +
-                 self.cfg.asset.l1 * torch.cos(theta1) +
-                 self.cfg.asset.l2 * torch.cos(theta1 + theta2))
+                 self.cfg.asset.l1 * torch.cos(self.theta1) +
+                 self.cfg.asset.l2 * torch.cos(self.theta1 + self.theta2))
         end_y = self.cfg.asset.l1 * torch.sin(
-            theta1) + self.cfg.asset.l2 * torch.sin(theta1 + theta2)
+            self.theta1) + self.cfg.asset.l2 * torch.sin(self.theta1 + self.theta2)
         L0 = torch.sqrt(end_x**2 + end_y**2)
         theta0 = torch.arctan2(end_y, end_x) - self.pi / 2
         return L0, theta0
@@ -389,7 +389,6 @@ class Diablo(BaseTask):
             ),
             dim=-1,
         )
-        # print(self.dof_pos[:, [2, 5]])
         return obs_buf
 
     def compute_observations(self):
@@ -1294,7 +1293,7 @@ class Diablo(BaseTask):
         3. Store indices of different bodies of the robot
         """
         asset_path = self.cfg.asset.file.format(
-            wheeled_bipedal_gym_ROOT_DIR=wheeled_bipedal_gym_ROOT_DIR)
+            WHEELED_BIPEDAL_GYM_ROOT_DIR=WHEELED_BIPEDAL_GYM_ROOT_DIR)
         asset_root = os.path.dirname(asset_path)
         asset_file = os.path.basename(asset_path)
 

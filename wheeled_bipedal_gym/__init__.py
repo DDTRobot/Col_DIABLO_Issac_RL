@@ -30,7 +30,7 @@
 
 import os
 
-wheeled_bipedal_gym_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-wheeled_bipedal_gym_ENVS_DIR = os.path.join(
-    wheeled_bipedal_gym_ROOT_DIR, "wheeled_bipedal_gym", "envs"
+WHEELED_BIPEDAL_GYM_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+WHEELED_BIPEDAL_GYM_ENVS_DIR = os.path.join(
+    WHEELED_BIPEDAL_GYM_ROOT_DIR, "wheeled_bipedal_gym", "envs"
 )

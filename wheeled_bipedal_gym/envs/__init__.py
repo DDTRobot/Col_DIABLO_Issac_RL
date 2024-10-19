@@ -28,9 +28,9 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
-from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR, WHEEL_LEGGED_GYM_ENVS_DIR
+from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR, WHEELED_BIPEDAL_GYM_ENVS_DIR
 
-from .diablo.diablo import Diablo
+from .base.wheeled_bipedal import WheeledBipedal
 from .diablo.diablo_config import DiabloCfg, DiabloCfgPPO
 
 from .diablo_vmc.diablo_vmc import DiabloVMC
@@ -38,8 +38,8 @@ from .diablo_vmc.diablo_vmc_config import DiabloVMCCfg, DiabloVMCCfgPPO
 
 import os
 
-from wheel_legged_gym.utils.task_registry import task_registry
+from wheeled_bipedal_gym.utils.task_registry import task_registry
 
-task_registry.register("diablo", Diablo, DiabloCfg(), DiabloCfgPPO())
+task_registry.register("diablo", WheeledBipedal, DiabloCfg(), DiabloCfgPPO())
 task_registry.register("diablo_vmc", DiabloVMC, DiabloVMCCfg(),
                        DiabloVMCCfgPPO())
