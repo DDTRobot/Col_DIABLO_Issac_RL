@@ -681,7 +681,7 @@ class Diablo(BaseTask):
         torques = self.p_gains * (pos_ref + self.default_dof_pos - self.dof_pos
                                   ) + self.d_gains * (vel_ref - self.dof_vel)
 
-        # T1, T2 = self.VMC(
+        # T1, T2 = self.compute_motor_torque(
         #     self.cfg.control.feedforward_force, 0.
         # )
         #
@@ -693,7 +693,7 @@ class Diablo(BaseTask):
         return torch.clip(torques * self.torques_scale, -self.torque_limits,
                           self.torque_limits)
 
-    def VMC(self, F, T):
+    def compute_motor_torque(self, F, T):
         l1 = self.cfg.asset.l1
         l2 = self.cfg.asset.l2
         theta1 = self.theta1
