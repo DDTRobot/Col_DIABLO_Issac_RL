@@ -89,7 +89,7 @@ class DiabloVMCCfg(DiabloCfg):
             tracking_lin_vel_enhance = 1
             tracking_ang_vel = 1.0
 
-            base_height = 0.5
+            base_height = 5
             nominal_state = -0.1
             lin_vel_z = -0.1e-3
             ang_vel_xy = -0.05
@@ -104,10 +104,10 @@ class DiabloVMCCfg(DiabloCfg):
             collision = -1.0
             dof_pos_limits = -1
 
-            theta_limit = -0.1e-8
+            theta_limit = -0.1e-5
             same_l = -0.1e-8
             # special for wheel
-            wheel_vel = -0.001
+            wheel_vel = -0.1e-5
 
         base_height_target = 0.30
 
@@ -140,7 +140,8 @@ class DiabloVMCCfg(DiabloCfg):
             l0 = 5.0
             l0_dot = 0.25
             # wheel pos should be zero!
-            dof_pos = 0.0
+            wheel_pos = 0.0
+            dof_pos = 1.0
 
     class noise(DiabloCfg.noise):
 
@@ -183,11 +184,6 @@ class DiabloVMCCfg(DiabloCfg):
 
 
 class DiabloVMCCfgPPO(DiabloCfgPPO):
-
-    class algorithm(DiabloCfgPPO.algorithm):
-        kl_decay = (DiabloCfgPPO.algorithm.desired_kl -
-                    0.002) / DiabloCfgPPO.runner.max_iterations
-
     class runner(DiabloCfgPPO.runner):
         # logging
         experiment_name = "diablo_vmc"

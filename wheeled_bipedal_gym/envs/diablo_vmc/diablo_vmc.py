@@ -73,6 +73,98 @@ class DiabloVMC(WheeledBipedal):
         super().__init__(self.cfg, sim_params, physics_engine, sim_device,
                          headless)
 
+    def step(self, actions):
+        """Apply actions, simulate, call self.post_physics_step()
+
+        Args:
+            actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
+        """
+        clip_actions = self.cfg.normalization.clip_actions
+        self.actions = torch.clip(actions, -clip_actions,
+                                  clip_actions).to(self.device)
+        # step physics and render each frame
+        self.render()
+        self.pre_physics_step()
+        for _ in range(self.cfg.control.decimation):
+            self.leg_post_physics_step()
+            self.envs_steps_buf += 1
+            self.action_fifo = torch.cat(
+                (self.actions.unsqueeze(1), self.action_fifo[:, :-1, :]),
+                dim=1)
+            self.torques = self._compute_torques(
+                self.action_fifo[torch.arange(self.num_envs),
+                self.action_delay_idx, :]).view(
+                self.torques.shape)
+            self.gym.set_dof_actuation_force_tensor(
+                self.sim, gymtorch.unwrap_tensor(self.torques))
+            if self.cfg.domain_rand.push_robots:
+                self._push_robots()
+            self.gym.simulate(self.sim)
+            if self.device == "cpu":
+                self.gym.fetch_results(self.sim, True)
+            self.gym.refresh_dof_state_tensor(self.sim)
+            self.compute_dof_vel()
+        self.post_physics_step()
+
+        # return clipped obs, clipped states (None), rewards, dones and infos
+        clip_obs = self.cfg.normalization.clip_observations
+        self.obs_buf = torch.clip(self.obs_buf, -clip_obs, clip_obs)
+        if self.privileged_obs_buf is not None:
+            self.privileged_obs_buf = torch.clip(self.privileged_obs_buf,
+                                                 -clip_obs, clip_obs)
+
+        return (
+            self.obs_buf,
+            self.privileged_obs_buf,
+            self.rew_buf,
+            self.reset_buf,
+            self.extras,
+            self.obs_history,
+        )
+
+    def compute_observations(self):
+        """Computes observations"""
+        self.obs_buf = self.compute_proprioception_observations()
+
+        if self.cfg.env.num_privileged_obs is not None:
+            heights = (
+                    torch.clip(
+                        self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights,
+                        -1,
+                        1.0,
+                        )
+                    * self.obs_scales.height_measurements
+            )
+            self.privileged_obs_buf = torch.cat(
+                (
+                    self.base_lin_vel * self.obs_scales.lin_vel,
+                    self.obs_buf,
+                    self.last_actions[:, :, 0],
+                    self.last_actions[:, :, 1],
+                    self.dof_acc * self.obs_scales.dof_acc,
+                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                    self.dof_vel * self.obs_scales.dof_vel,
+                    heights,
+                    self.torques * self.obs_scales.torque,
+                    (self.base_mass - self.base_mass.mean()).view(self.num_envs, 1),
+                    self.base_com,
+                    self.default_dof_pos - self.raw_default_dof_pos,
+                    self.friction_coef.view(self.num_envs, 1),
+                    self.restitution_coef.view(self.num_envs, 1),
+                ),
+                dim=-1,
+            )
+
+        # add noise if needed
+        if self.add_noise:
+            self.obs_buf += (
+                                    2 * torch.rand_like(self.obs_buf) - 1
+                            ) * self.noise_scale_vec
+
+        self.obs_history = torch.cat(
+            (self.obs_history[:, self.num_obs:], self.obs_buf), dim=-1
+        )
+
     def compute_proprioception_observations(self):
         # note that observation noise need to modified accordingly !!!
         obs_buf = torch.cat(
@@ -85,7 +177,7 @@ class DiabloVMC(WheeledBipedal):
                 self.theta0_dot * self.obs_scales.dof_vel,
                 self.L0 * self.obs_scales.l0,
                 self.L0_dot * self.obs_scales.l0_dot,
-                self.dof_pos[:, [2, 5]] * self.obs_scales.dof_pos,
+                self.dof_pos[:, [2, 5]] * self.obs_scales.wheel_pos,
                 self.dof_vel[:, [2, 5]] * self.obs_scales.dof_vel,
                 self.actions,
             ),
@@ -134,9 +226,7 @@ class DiabloVMC(WheeledBipedal):
                                                        self.dof_vel[:, [2, 5]])
         T1, T2 = self.compute_motor_torque(
             self.force_leg +
-            self.cfg.control.feedforward_force * torch.cos(self.theta0),
-            self.torque_leg -
-            self.cfg.control.feedforward_force * torch.sin(self.theta0))
+            self.cfg.control.feedforward_force * torch.cos(self.theta0),self.torque_leg)
 
         torques = torch.cat(
             (
