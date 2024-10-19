@@ -28,7 +28,7 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
-from wheel_legged_gym.envs.base.base_config import BaseConfig
+from wheeled_bipedal_gym.envs.base.base_config import BaseConfig
 
 
 class DiabloCfg(BaseConfig):
@@ -132,7 +132,7 @@ class DiabloCfg(BaseConfig):
         feedforward_force = 60.0
 
     class asset:
-        file = "{WHEEL_LEGGED_GYM_ROOT_DIR}/resources/robots/diablo/urdf/diablo_ASM.urdf"
+        file = "{wheeled_bipedal_gym_ROOT_DIR}/resources/robots/diablo/urdf/diablo_ASM.urdf"
         name = "diablo"
         offset = 0.
         l1 = 0.14

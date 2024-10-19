@@ -36,13 +36,13 @@ import statistics
 from torch.utils.tensorboard import SummaryWriter
 import torch
 
-from wheel_legged_gym.rsl_rl.algorithms import PPO
-from wheel_legged_gym.rsl_rl.modules import (
+from wheeled_bipedal_gym.rsl_rl.algorithms import PPO
+from wheeled_bipedal_gym.rsl_rl.modules import (
     ActorCritic,
     ActorCriticRecurrent,
     ActorCriticSequence,
 )
-from wheel_legged_gym.rsl_rl.env import VecEnv
+from wheeled_bipedal_gym.rsl_rl.env import VecEnv
 
 
 class OnPolicyRunner:

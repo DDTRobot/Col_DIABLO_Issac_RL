@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from wheel_legged_gym.rsl_rl.modules import ActorCritic
-from wheel_legged_gym.rsl_rl.storage import RolloutStorage
+from wheeled_bipedal_gym.rsl_rl.modules import ActorCritic
+from wheeled_bipedal_gym.rsl_rl.storage import RolloutStorage
 
 
 class PPO:

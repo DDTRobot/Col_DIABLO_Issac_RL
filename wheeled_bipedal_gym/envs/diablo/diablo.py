@@ -29,7 +29,7 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 from networkx.algorithms.tournament import tournament_matrix
 
-from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR, envs
+from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR, envs
 from time import time
 from warnings import WarningMessage
 import numpy as np
@@ -42,16 +42,16 @@ import torch
 from torch import Tensor
 from typing import Tuple, Dict
 
-from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR
-from wheel_legged_gym.envs.base.base_task import BaseTask
-from wheel_legged_gym.utils.terrain import Terrain
-from wheel_legged_gym.utils.math import (
+from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR
+from wheeled_bipedal_gym.envs.base.base_task import BaseTask
+from wheeled_bipedal_gym.utils.terrain import Terrain
+from wheeled_bipedal_gym.utils.math import (
     quat_apply_yaw,
     wrap_to_pi,
     torch_rand_sqrt_float,
 )
-from wheel_legged_gym.utils.helpers import class_to_dict
-from wheel_legged_gym.envs.base.legged_robot_config import LeggedRobotCfg
+from wheeled_bipedal_gym.utils.helpers import class_to_dict
+from wheeled_bipedal_gym.envs.base.legged_robot_config import LeggedRobotCfg
 
 
 class Diablo(BaseTask):
@@ -1294,7 +1294,7 @@ class Diablo(BaseTask):
         3. Store indices of different bodies of the robot
         """
         asset_path = self.cfg.asset.file.format(
-            WHEEL_LEGGED_GYM_ROOT_DIR=WHEEL_LEGGED_GYM_ROOT_DIR)
+            wheeled_bipedal_gym_ROOT_DIR=wheeled_bipedal_gym_ROOT_DIR)
         asset_root = os.path.dirname(asset_path)
         asset_file = os.path.basename(asset_path)
 

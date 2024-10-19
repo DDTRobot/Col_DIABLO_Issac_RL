@@ -36,10 +36,10 @@ import numpy as np
 from shutil import copyfile
 import ntpath
 
-from wheel_legged_gym.rsl_rl.env.vec_env import VecEnv
-from wheel_legged_gym.rsl_rl.runners.on_policy_runner import OnPolicyRunner
+from wheeled_bipedal_gym.rsl_rl.env.vec_env import VecEnv
+from wheeled_bipedal_gym.rsl_rl.runners.on_policy_runner import OnPolicyRunner
 
-from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR, WHEEL_LEGGED_GYM_ENVS_DIR
+from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR, wheeled_bipedal_gym_ENVS_DIR
 from .helpers import (
     get_args,
     update_cfg_from_args,
@@ -48,7 +48,7 @@ from .helpers import (
     set_seed,
     parse_sim_params,
 )
-from wheel_legged_gym.envs.base.legged_robot_config import (
+from wheeled_bipedal_gym.envs.base.legged_robot_config import (
     LeggedRobotCfg,
     LeggedRobotCfgPPO,
 )
@@ -87,21 +87,21 @@ class TaskRegistry:
         save_items = [
             os.path.join(
                 self.log_dir,
-                WHEEL_LEGGED_GYM_ENVS_DIR + "/base/legged_robot.py",
+                wheeled_bipedal_gym_ENVS_DIR + "/base/legged_robot.py",
             ),
             os.path.join(
                 self.log_dir,
-                WHEEL_LEGGED_GYM_ENVS_DIR + "/base/legged_robot_config.py",
+                wheeled_bipedal_gym_ENVS_DIR + "/base/legged_robot_config.py",
             ),
             os.path.join(
                 self.log_dir,
-                WHEEL_LEGGED_GYM_ENVS_DIR
+                wheeled_bipedal_gym_ENVS_DIR
                 + "/{}/".format(name)
                 + "{}_config.py".format(name),
             ),
         ]
         py_root = os.path.join(
-            WHEEL_LEGGED_GYM_ENVS_DIR + "/{}/".format(name) + "{}.py".format(name),
+            wheeled_bipedal_gym_ENVS_DIR + "/{}/".format(name) + "{}.py".format(name),
         )
         if os.path.exists(py_root):
             save_items.append(os.path.join(self.log_dir, py_root))
@@ -189,7 +189,7 @@ class TaskRegistry:
 
         if log_root == "default":
             log_root = os.path.join(
-                WHEEL_LEGGED_GYM_ROOT_DIR,
+                wheeled_bipedal_gym_ROOT_DIR,
                 "logs",
                 train_cfg.runner.experiment_name,
             )

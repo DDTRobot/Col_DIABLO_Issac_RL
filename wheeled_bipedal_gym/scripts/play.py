@@ -28,13 +28,13 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
-from wheel_legged_gym import WHEEL_LEGGED_GYM_ROOT_DIR
+from wheeled_bipedal_gym import wheeled_bipedal_gym_ROOT_DIR
 import os
 
 import isaacgym
 from isaacgym.torch_utils import *
-from wheel_legged_gym.envs import *
-from wheel_legged_gym.utils import get_args, export_policy_as_jit, task_registry, Logger
+from wheeled_bipedal_gym.envs import *
+from wheeled_bipedal_gym.utils import get_args, export_policy_as_jit, task_registry, Logger
 
 import numpy as np
 import torch
@@ -77,7 +77,7 @@ def play(args):
     # export policy as a jit module (used to run it from C++)
     if EXPORT_POLICY:
         path = os.path.join(
-            WHEEL_LEGGED_GYM_ROOT_DIR,
+            wheeled_bipedal_gym_ROOT_DIR,
             "logs",
             train_cfg.runner.experiment_name,
             "exported",
@@ -130,7 +130,7 @@ def play(args):
         if RECORD_FRAMES:
             if i % 2:
                 filename = os.path.join(
-                    WHEEL_LEGGED_GYM_ROOT_DIR,
+                    wheeled_bipedal_gym_ROOT_DIR,
                     "logs",
                     train_cfg.runner.experiment_name,
                     "exported",

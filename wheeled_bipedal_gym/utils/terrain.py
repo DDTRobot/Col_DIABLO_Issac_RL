@@ -33,7 +33,7 @@ from numpy.random import choice
 from scipy import interpolate
 
 from isaacgym import terrain_utils
-from wheel_legged_gym.envs.base.legged_robot_config import LeggedRobotCfg
+from wheeled_bipedal_gym.envs.base.legged_robot_config import LeggedRobotCfg
 
 
 class Terrain:

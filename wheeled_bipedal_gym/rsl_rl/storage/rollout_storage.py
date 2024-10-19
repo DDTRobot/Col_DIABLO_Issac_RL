@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import torch
 
-from wheel_legged_gym.rsl_rl.utils import split_and_pad_trajectories
+from wheeled_bipedal_gym.rsl_rl.utils import split_and_pad_trajectories
 
 
 class RolloutStorage:

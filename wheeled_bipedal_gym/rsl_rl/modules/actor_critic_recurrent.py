@@ -6,8 +6,8 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from wheel_legged_gym.rsl_rl.modules.actor_critic import ActorCritic, get_activation
-from wheel_legged_gym.rsl_rl.utils import unpad_trajectories
+from wheeled_bipedal_gym.rsl_rl.modules.actor_critic import ActorCritic, get_activation
+from wheeled_bipedal_gym.rsl_rl.utils import unpad_trajectories
 
 
 class ActorCriticRecurrent(ActorCritic):
