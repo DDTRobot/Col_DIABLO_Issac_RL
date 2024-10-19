@@ -132,7 +132,7 @@ class DiabloCfg(BaseConfig):
         feedforward_force = 60.0
 
     class asset:
-        file = "{wheeled_bipedal_gym_ROOT_DIR}/resources/robots/diablo/urdf/diablo_ASM.urdf"
+        file = "{wheeled_bipedal_gym_ROOT_DIR}/resources/robots/diablo/urdf/diablo_asm.urdf"
         name = "diablo"
         offset = 0.
         l1 = 0.14

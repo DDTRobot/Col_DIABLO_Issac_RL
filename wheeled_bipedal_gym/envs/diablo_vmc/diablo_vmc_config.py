@@ -43,7 +43,7 @@ class DiabloVMCCfg(DiabloCfg):
         episode_length_s = 20
 
     class terrain(DiabloCfg.terrain):
-        mesh_type = "trimesh"
+        mesh_type = "plane"
         # mesh_type = "trimesh"  # "heightfield" # none, plane, heightfield or trimesh
         horizontal_scale = 0.1  # [m]
         vertical_scale = 0.005  # [m]
@@ -110,20 +110,6 @@ class DiabloVMCCfg(DiabloCfg):
             wheel_vel = -0.001
 
         base_height_target = 0.30
-
-    class init_state(DiabloCfg.init_state):
-        pos = [0.0, 0.0, 0.15]  # x,y,z [m]
-        rot = [0.0, 0.0, 0.0, 1.0]  # x,y,z,w [quat]
-        lin_vel = [0.0, 0.0, 0.0]  # x,y,z [m/s]
-        ang_vel = [0.0, 0.0, 0.0]  # x,y,z [rad/s]
-        default_joint_angles = {  # target angles when action = 0.0
-            "left_fake_hip_joint": -0.5,
-            "left_fake_knee_joint": 1.0,
-            "left_wheel_joint": 0.0,
-            "right_fake_hip_joint": -0.5,
-            "right_fake_knee_joint": 1.0,
-            "right_wheel_joint": 0.0,
-        }
 
     class control(DiabloCfg.control):
         action_scale_theta = 0.5
