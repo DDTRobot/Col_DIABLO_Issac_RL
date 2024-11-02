@@ -1817,7 +1817,9 @@ class WheeledBipedal(BaseTask):
 
     def _reward_theta_limit(self):
         # Penalize theta is too huge
-        return torch.sum(torch.square(self.theta0[:, :2]), dim=1)
+        base_pitch = self.projected_gravity[:, 1]
+        base_pitch = base_pitch.unsqueeze(1)
+        return torch.sum(torch.square(self.theta0[:, :2] + base_pitch), dim=1)
 
     def _reward_same_l(self):
         # Penalize l is too dif
