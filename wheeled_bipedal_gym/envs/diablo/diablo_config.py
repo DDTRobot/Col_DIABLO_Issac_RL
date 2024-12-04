@@ -75,7 +75,7 @@ class DiabloCfg(WheeledBipedalCfg):
         )
 
     class commands(WheeledBipedalCfg.commands):
-        curriculum = True
+        curriculum = False
         basic_max_curriculum = 2.5
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
@@ -84,19 +84,19 @@ class DiabloCfg(WheeledBipedalCfg):
         heading_command = True  # if true: compute ang vel command from heading error
 
         class ranges(WheeledBipedalCfg.commands.ranges):
-            lin_vel_x = [-5.0, 5.0]  # min max [m/s]
-            ang_vel_yaw = [-3.14, 3.14]  # min max [rad/s]
-            height = [0.18, 0.35]
-            heading = [-3.14, 3.14]
+            lin_vel_x = [-0.01, 0.01]  # min max [m/s]
+            ang_vel_yaw = [-0.01, 0.01]  # min max [rad/s]
+            height = [0.15, 0.35]
+            heading = [-0.01, 0.01]
 
     class init_state(WheeledBipedalCfg.init_state):
-        pos = [0.0, 0.0, 0.3]  # x,y,z [m]
+        pos = [0.0, 0.0, 0.15]  # x,y,z [m]
         default_joint_angles = {  # target angles when action = 0.0
-            "left_fake_hip_joint": -0.5,
-            "left_fake_knee_joint": 1.0,
+            "left_fake_hip_joint": 0.0,
+            "left_fake_knee_joint": 0.0,
             "left_wheel_joint": 0.0,
-            "right_fake_hip_joint": -0.5,
-            "right_fake_knee_joint": 1.0,
+            "right_fake_hip_joint": 0.0,
+            "right_fake_knee_joint": 0.0,
             "right_wheel_joint": 0.0,
         }
 
@@ -104,7 +104,7 @@ class DiabloCfg(WheeledBipedalCfg):
         control_type = "P"  # P: position, V: velocity, T: torques
         # PD Drive parameters:
         stiffness = {"hip": 30.0, "knee": 40.0, "wheel": 0}  # [N*m/rad]
-        damping = {"hip": 0.5, "knee": 0.7, "wheel": 0.3}  # [N*m*s/rad]
+        damping = {"hip": 0.4, "knee": 0.5, "wheel": 0.6}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
@@ -154,25 +154,26 @@ class DiabloCfg(WheeledBipedalCfg):
             tracking_lin_vel_enhance = 1
             tracking_ang_vel = 1.0
 
-            base_height = 5.0
-            nominal_state = -0.1
+            base_height = 1.0
+            base_height_enhance = 1
+            nominal_state = -0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
             orientation = -200.0
 
             dof_vel = -5e-5
             dof_acc = -2.5e-7
-            torques = -0.001
+            torques = -1e-5
             action_rate = -0.03
             action_smooth = -0.03
 
-            collision = -1.0
+            collision = -1000.0
             dof_pos_limits = -1.0
+            dof_vel_limits = -1.0
 
             theta_limit = -0.01
             same_l = 0.1e-5
-            wheel_vel = -0.1
-            # block_l = 400
+            wheel_vel = -5e-1
 
         only_positive_rewards = False  # if true negative total rewards are clipped at zero (avoids early termination problems)
         clip_single_reward = 1
@@ -182,7 +183,6 @@ class DiabloCfg(WheeledBipedalCfg):
         )
         soft_dof_vel_limit = 1.0
         soft_torque_limit = 1.0
-        base_height_target = 0.25
         max_contact_force = 100.0  # forces above this value are penalized
 
     class normalization(WheeledBipedalCfg.normalization):

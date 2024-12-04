@@ -155,8 +155,8 @@ class WheeledBipedal(BaseTask):
             dim=1)
         self.theta2 = torch.cat(
             (
-                (self.dof_pos[:, 1] - self.pi - 0.26866).unsqueeze(1),
-                (self.dof_pos[:, 4] - self.pi - 0.26866).unsqueeze(1),
+                (self.dof_pos[:, 1] - self.pi + 0.26866).unsqueeze(1),
+                (self.dof_pos[:, 4] - self.pi + 0.26866).unsqueeze(1),
             ),
             dim=1,
         )
@@ -680,14 +680,14 @@ class WheeledBipedal(BaseTask):
         torques = self.p_gains * (pos_ref + self.default_dof_pos - self.dof_pos
                                   ) + self.d_gains * (vel_ref - self.dof_vel)
 
-        # T1, T2 = self.compute_motor_torque(
-        #     self.cfg.control.feedforward_force, 0.
-        # )
-        #
-        # torques[:,0] += T1[:, 0]
-        # torques[:,3] += T1[:, 1]
-        # torques[:,1] += T2[:, 0]
-        # torques[:,4] += T2[:, 1]
+        T1, T2 = self.compute_motor_torque(
+            self.cfg.control.feedforward_force, 0.
+        )
+
+        torques[:,0] += T1[:, 0]
+        torques[:,3] += T1[:, 1]
+        torques[:,1] += T2[:, 0]
+        torques[:,4] += T2[:, 1]
 
         return torch.clip(torques * self.torques_scale, -self.torque_limits,
                           self.torque_limits)
@@ -1830,9 +1830,7 @@ class WheeledBipedal(BaseTask):
         # left_wheel_vel = self.commands[:,0]/2 - self.commands[:,1]
         # right_wheel_vel = self.commands[:,0]/2 + self.commands[:,1]
         # return torch.sum(torch.square(self.dof_vel[:, 2] - left_wheel_vel) + torch.square(self.dof_vel[:, 5]) - right_wheel_vel)
-        return torch.sum(
-            torch.square(self.dof_vel[:, 2]) +
-            torch.square(self.dof_vel[:, 5]))
+        return torch.sum(torch.square(self.dof_vel[:, [2, 5]]), dim=1)
 
     def _reward_block_l(self):
         vel_x_des = self.commands[:, 0]
