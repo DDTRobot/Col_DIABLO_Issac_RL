@@ -75,7 +75,7 @@ class DiabloCfg(WheeledBipedalCfg):
         )
 
     class commands(WheeledBipedalCfg.commands):
-        curriculum = False
+        curriculum = True
         basic_max_curriculum = 2.5
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
@@ -84,10 +84,10 @@ class DiabloCfg(WheeledBipedalCfg):
         heading_command = True  # if true: compute ang vel command from heading error
 
         class ranges(WheeledBipedalCfg.commands.ranges):
-            lin_vel_x = [-0.01, 0.01]  # min max [m/s]
-            ang_vel_yaw = [-0.01, 0.01]  # min max [rad/s]
+            lin_vel_x = [-3., 3]  # min max [m/s]
+            ang_vel_yaw = [-3.14, 3.14]  # min max [rad/s]
             height = [0.15, 0.35]
-            heading = [-0.01, 0.01]
+            heading = [-3.14, 3.14]
 
     class init_state(WheeledBipedalCfg.init_state):
         pos = [0.0, 0.0, 0.15]  # x,y,z [m]
@@ -173,7 +173,7 @@ class DiabloCfg(WheeledBipedalCfg):
 
             theta_limit = -0.01
             same_l = 0.1e-5
-            wheel_vel = -5e-1
+            wheel_vel = -5e-5
 
         only_positive_rewards = False  # if true negative total rewards are clipped at zero (avoids early termination problems)
         clip_single_reward = 1

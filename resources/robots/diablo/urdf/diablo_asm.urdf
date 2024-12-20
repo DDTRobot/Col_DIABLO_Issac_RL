@@ -171,13 +171,13 @@
     <parent link="left_fake_shank_link"/>
     <child link="left_wheel"/>
     <axis xyz="0 0 1"/>
-    <limit effort="5" velocity="26" />
+    <limit effort="5" velocity="5" />
   </joint>
   <joint name="right_wheel_joint" type="revolute">
     <origin rpy="0 0 0.13433" xyz="0.14 0 -0.025"/>
     <parent link="right_fake_shank_link"/>
     <child link="right_wheel"/>
     <axis xyz="0 0 1"/>
-    <limit effort="5" velocity="26" />
+    <limit effort="5" velocity="5" />
   </joint>
 </robot>
