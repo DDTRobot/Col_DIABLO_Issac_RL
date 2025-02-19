@@ -75,17 +75,17 @@ class DiabloCfg(WheeledBipedalCfg):
         )
 
     class commands(WheeledBipedalCfg.commands):
-        curriculum = True
-        basic_max_curriculum = 2.5
+        curriculum = False
+        basic_max_curriculum = 1.5
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
         num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
-        resampling_time = 5.0  # time before command are changed[s]
-        heading_command = True  # if true: compute ang vel command from heading error
+        resampling_time = 3.0  # time before command are changed[s]
+        heading_command = False  # if true: compute ang vel command from heading error
 
         class ranges(WheeledBipedalCfg.commands.ranges):
-            lin_vel_x = [-3., 3]  # min max [m/s]
-            ang_vel_yaw = [-3.14, 3.14]  # min max [rad/s]
+            lin_vel_x = [-0.0001, 0.0001]  # min max [m/s]
+            ang_vel_yaw = [-0.0001, 0.0001]  # min max [rad/s]
             height = [0.15, 0.35]
             heading = [-3.14, 3.14]
 
@@ -110,7 +110,7 @@ class DiabloCfg(WheeledBipedalCfg):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 2
         pos_action_scale = 0.5
-        vel_action_scale = 10.0
+        vel_action_scale = 0.25
         feedforward_force = 60.0
 
     class asset(WheeledBipedalCfg.asset):
@@ -134,7 +134,7 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_base_com = True
         rand_com_vec = [0.05, 0.05, 0.05]
         push_robots = True
-        push_interval_s = 7
+        push_interval_s = 4
         max_push_vel_xy = 2.0
         randomize_Kp = True
         randomize_Kp_range = [0.9, 1.1]
@@ -143,7 +143,7 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_motor_torque = True
         randomize_motor_torque_range = [0.9, 1.1]
         randomize_default_dof_pos = True
-        randomize_default_dof_pos_range = [-0.3, 0.3]
+        randomize_default_dof_pos_range = [-0.03, 0.03]
         randomize_action_delay = True
         delay_ms_range = [0, 10]
 
@@ -201,10 +201,11 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class noise(WheeledBipedalCfg.noise):
         add_noise = True
-        noise_level = 0.5  # scales other values
+        noise_type = "Gaussian"  # Gaussian or Uniform
+        noise_level = 1.0  # scales other values
 
         class noise_scales(WheeledBipedalCfg.noise.noise_scales):
-            dof_pos = 0.1
+            dof_pos = 0.3
             dof_vel = 1.5
             lin_vel = 0.1
             ang_vel = 0.2

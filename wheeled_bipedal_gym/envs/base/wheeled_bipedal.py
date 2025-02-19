@@ -391,6 +391,27 @@ class WheeledBipedal(BaseTask):
         )
         return obs_buf
 
+    def apply_noise(self, data, noise_type="Gaussian", noise_scale=1.0):
+        """
+        Add specified type of noise to the data
+        Args:
+            data: Original data (torch.Tensor)
+            noise_type: Type of noise ("Gaussian" or "Uniform")
+            noise_scale: Scale of the noise
+        Returns:
+            data with added noise
+        """
+        if noise_type == "Gaussian":
+            # Add Gaussian noise
+            noise = torch.randn_like(data) * noise_scale
+        elif noise_type == "Uniform":
+            # Add uniform noise
+            noise = (2 * torch.rand_like(data) - 1) * noise_scale
+        else:
+            raise ValueError(f"Unsupported noise type: {noise_type}")
+
+        return data + noise
+
     def compute_observations(self):
         """Computes observations"""
         self.obs_buf = self.compute_proprioception_observations()
@@ -423,8 +444,11 @@ class WheeledBipedal(BaseTask):
 
         # add noise if needed
         if self.add_noise:
-            self.obs_buf += (2 * torch.rand_like(self.obs_buf) -
-                             1) * self.noise_scale_vec
+            self.obs_buf = self.apply_noise(
+                self.obs_buf,
+                noise_type=self.noise_type,  # Use specified noise type
+                noise_scale=self.noise_scale_vec
+            )
 
         update_idx = ((self.envs_steps_buf / self.cfg.control.decimation) %
                       self.cfg.env.obs_history_dec) == 0
@@ -753,9 +777,12 @@ class WheeledBipedal(BaseTask):
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
         # base velocities
-        self.root_states[env_ids, 7:13] = torch_rand_float(
-            -0.5, 0.5, (len(env_ids), 6),
-            device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
+        # self.root_states[env_ids, 7:13] = torch_rand_float(
+        #     -0.5, 0.5, (len(env_ids), 6),
+        #     device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
+
+        self.root_states[env_ids, 7:13] = torch.zeros((len(env_ids), 6), device=self.device)
+
         env_ids_int32 = env_ids.to(dtype=torch.int32)
         self.gym.set_actor_root_state_tensor_indexed(
             self.sim,
@@ -908,6 +935,7 @@ class WheeledBipedal(BaseTask):
         """
         noise_vec = torch.zeros_like(self.obs_buf[0])
         self.add_noise = self.cfg.noise.add_noise
+        self.noise_type = self.cfg.noise.noise_type
         noise_scales = self.cfg.noise.noise_scales
         noise_level = self.cfg.noise.noise_level
 
