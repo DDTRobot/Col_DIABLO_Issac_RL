@@ -93,6 +93,12 @@ class WheeledBipedal(BaseTask):
         Args:
             actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
         """
+        # dynamic randomization
+        inertia = torch.rand((self.num_envs, 1), device=self.device) * self.cfg.domain_rand.action_inertia
+
+        actions = (1 - inertia) * actions + inertia * self.actions
+        actions += self.cfg.domain_rand.action_noise * torch.randn_like(actions) * actions
+
         clip_actions = self.cfg.normalization.clip_actions
         self.actions = torch.clip(actions, -clip_actions,
                                   clip_actions).to(self.device)
@@ -782,6 +788,8 @@ class WheeledBipedal(BaseTask):
             -0.5, 0.5, (len(env_ids), 6),
             device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
 
+        # random_values = torch_rand_float(-0.2, 1.0, (len(env_ids), 1), device=self.device)
+        # self.root_states[env_ids, 9] = random_values.squeeze(-1)
         # self.root_states[env_ids, 7:13] = torch.zeros((len(env_ids), 6), device=self.device)
 
         env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -963,17 +971,13 @@ class WheeledBipedal(BaseTask):
         noise_scales = self.cfg.noise.noise_scales
         noise_level = self.cfg.noise.noise_level
 
-        noise_vec[:
-                  3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+        noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
         noise_vec[3:6] = noise_scales.gravity * noise_level
         noise_vec[6:8] = 0.0  # commands
-        noise_vec[
-            8:
-            14] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
-        noise_vec[
-            14:
-            20] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+        noise_vec[8:14] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+        noise_vec[14:20] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
         noise_vec[20:26] = 0.0  # previous actions
+
         if self.cfg.terrain.measure_heights:
             noise_vec[48:235] = (noise_scales.height_measurements *
                                  noise_level *
