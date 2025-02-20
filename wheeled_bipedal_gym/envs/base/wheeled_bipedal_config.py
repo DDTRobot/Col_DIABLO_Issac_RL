@@ -44,7 +44,7 @@ class WheeledBipedalCfg(BaseConfig):
         num_actions = 6
         env_spacing = 3.0  # not used with heightfields/trimeshes
         send_timeouts = True  # send time out information to the algorithm
-        episode_length_s = 8  # episode length in seconds
+        episode_length_s = 20  # episode length in seconds
         dof_vel_use_pos_diff = True
         fail_to_terminal_time_s = 1
 
@@ -116,8 +116,8 @@ class WheeledBipedalCfg(BaseConfig):
     class control:
         control_type = "P"  # P: position, V: velocity, T: torques
         # PD Drive parameters:
-        stiffness = {"hip": 30.0, "knee": 40.0, "wheel": 0}  # [N*m/rad]
-        damping = {"hip": 0.5, "knee": 0.7, "wheel": 0.3}  # [N*m*s/rad]
+        stiffness = {"hip": 20.0, "knee": 25.0, "wheel": 0}  # [N*m/rad]
+        damping = {"hip": 0.12, "knee": 0.1, "wheel": 0.22}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
@@ -178,6 +178,8 @@ class WheeledBipedalCfg(BaseConfig):
         randomize_action_delay = True
         delay_ms_range = [0, 10]
 
+        action_noise = 0.02 # 0.02
+        action_inertia = 0.1 # 0.1
     class rewards:
 
         class scales:
@@ -255,13 +257,13 @@ class WheeledBipedalCfg(BaseConfig):
         up_axis = 1  # 0 is y, 1 is z
 
         class physx:
-            num_threads = 10
+            num_threads = 15
             solver_type = 1  # 0: pgs, 1: tgs
             num_position_iterations = 4
             num_velocity_iterations = 0
             contact_offset = 0.01  # [m]
             rest_offset = 0.0  # [m]
-            bounce_threshold_velocity = 0.5  # 0.5 [m/s]
+            bounce_threshold_velocity = 0.1  # 0.5 [m/s]
             max_depenetration_velocity = 1.0
             max_gpu_contact_pairs = 2**23  # 2**24 -> needed for 8000 envs and more
             default_buffer_size_multiplier = 5
@@ -275,7 +277,7 @@ class WheeledBipedalCfgPPO(BaseConfig):
     runner_class_name = "OnPolicyRunner"
 
     class policy:
-        init_noise_std = 0.5
+        init_noise_std = 1.0
         actor_hidden_dims = [128, 64, 32]
         critic_hidden_dims = [256, 128, 64]
         activation = "elu"  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
