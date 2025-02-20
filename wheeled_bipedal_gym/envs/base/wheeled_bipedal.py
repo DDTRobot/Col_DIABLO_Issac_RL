@@ -704,14 +704,15 @@ class WheeledBipedal(BaseTask):
         torques = self.p_gains * (pos_ref + self.default_dof_pos - self.dof_pos
                                   ) + self.d_gains * (vel_ref - self.dof_vel)
 
-        T1, T2 = self.compute_motor_torque(
-            self.cfg.control.feedforward_force, 0.
-        )
+        if self.cfg.control.use_feedforward:
+            T1, T2 = self.compute_motor_torque(
+                self.cfg.control.feedforward_force, 0.
+            )
 
-        torques[:,0] += T1[:, 0]
-        torques[:,3] += T1[:, 1]
-        torques[:,1] += T2[:, 0]
-        torques[:,4] += T2[:, 1]
+            torques[:,0] += T1[:, 0]
+            torques[:,3] += T1[:, 1]
+            torques[:,1] += T2[:, 0]
+            torques[:,4] += T2[:, 1]
 
         return torch.clip(torques * self.torques_scale, -self.torque_limits,
                           self.torque_limits)
@@ -800,17 +801,40 @@ class WheeledBipedal(BaseTask):
         if len(env_ids) == 0:
             return
 
-        max_push_force = (self.base_mass.mean().item() *
-                          self.cfg.domain_rand.max_push_vel_xy /
-                          self.sim_params.dt)
+        max_push_force_xy = (self.base_mass.mean().item() *
+                             self.cfg.domain_rand.max_push_vel_xy /
+                             self.sim_params.dt)
+
+        max_push_force_z = (self.base_mass.mean().item() *
+                            self.cfg.domain_rand.max_push_vel_z /
+                            self.sim_params.dt)
+
         self.rigid_body_external_forces[:] = 0
-        rigid_body_external_forces = torch_rand_float(-max_push_force,
-                                                      max_push_force,
-                                                      (self.num_envs, 3),
-                                                      device=self.device)
+
+        rigid_body_external_forces_xy = torch_rand_float(
+            -max_push_force_xy,
+            max_push_force_xy,
+            (self.num_envs, 2),
+            device=self.device
+        )
+
+        rigid_body_external_forces_z = torch_rand_float(
+            -max_push_force_z,
+            max_push_force_z,
+            (self.num_envs, 1),
+            device=self.device
+        )
+
+        rigid_body_external_forces = torch.cat(
+            [rigid_body_external_forces_xy,
+             rigid_body_external_forces_z],
+            dim=-1
+        )
+
         self.rigid_body_external_forces[env_ids, 0, 0:3] = quat_rotate(
-            self.base_quat[env_ids], rigid_body_external_forces[env_ids])
-        self.rigid_body_external_forces[env_ids, 0, 2] *= 0.5
+            self.base_quat[env_ids],
+            rigid_body_external_forces[env_ids]
+        )
 
         self.gym.apply_rigid_body_force_tensors(
             self.sim,

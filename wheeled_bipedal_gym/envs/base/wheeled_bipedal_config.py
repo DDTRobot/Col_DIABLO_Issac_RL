@@ -124,6 +124,7 @@ class WheeledBipedalCfg(BaseConfig):
         decimation = 2
         pos_action_scale = 0.5
         vel_action_scale = 10.0
+        use_feedforward = True
         feedforward_force = 60.0
 
     class asset:
@@ -165,6 +166,7 @@ class WheeledBipedalCfg(BaseConfig):
         push_robots = True
         push_interval_s = 7
         max_push_vel_xy = 2.0
+        max_push_vel_z = 1.0
         randomize_Kp = True
         randomize_Kp_range = [0.9, 1.1]
         randomize_Kd = True
