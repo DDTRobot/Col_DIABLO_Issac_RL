@@ -207,12 +207,12 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class noise(WheeledBipedalCfg.noise):
         add_noise = True
-        noise_type = "Gaussian"  # Gaussian or Uniform
+        noise_type = "Uniform"  # Gaussian or Uniform
         noise_level = 1.0  # scales other values
 
         class noise_scales(WheeledBipedalCfg.noise.noise_scales):
-            dof_pos = 0.3
-            dof_vel = 1.5
+            dof_pos = 0.05
+            dof_vel = 1.0
             lin_vel = 0.1
             ang_vel = 0.2
             gravity = 0.05
