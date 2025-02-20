@@ -279,7 +279,7 @@ class PPO:
 
                 self.extra_optimizer.zero_grad()
                 extra_loss.backward()
-                nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 0.1)
+                nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
                 self.extra_optimizer.step()
 
                 mean_extra_loss += extra_loss.item()
