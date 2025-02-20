@@ -777,11 +777,11 @@ class WheeledBipedal(BaseTask):
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
         # base velocities
-        # self.root_states[env_ids, 7:13] = torch_rand_float(
-        #     -0.5, 0.5, (len(env_ids), 6),
-        #     device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
+        self.root_states[env_ids, 7:13] = torch_rand_float(
+            -0.5, 0.5, (len(env_ids), 6),
+            device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
 
-        self.root_states[env_ids, 7:13] = torch.zeros((len(env_ids), 6), device=self.device)
+        # self.root_states[env_ids, 7:13] = torch.zeros((len(env_ids), 6), device=self.device)
 
         env_ids_int32 = env_ids.to(dtype=torch.int32)
         self.gym.set_actor_root_state_tensor_indexed(
