@@ -121,7 +121,7 @@ class WheeledBipedalCfg(BaseConfig):
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
-        decimation = 2
+        decimation = 5
         pos_action_scale = 0.5
         vel_action_scale = 10.0
         use_feedforward = True
@@ -176,7 +176,7 @@ class WheeledBipedalCfg(BaseConfig):
         randomize_default_dof_pos = True
         randomize_default_dof_pos_range = [-0.3, 0.3]
         randomize_action_delay = True
-        delay_ms_range = [0, 10]
+        delay_ms_range = [0, 5]
 
         action_noise = 0.02 # 0.02
         action_inertia = 0.1 # 0.1
@@ -251,13 +251,13 @@ class WheeledBipedalCfg(BaseConfig):
         lookat = [0, 0, 0]  # [m]
 
     class sim:
-        dt = 0.005
+        dt = 0.002
         substeps = 1
         gravity = [0.0, 0.0, -9.81]  # [m/s^2]
         up_axis = 1  # 0 is y, 1 is z
 
         class physx:
-            num_threads = 15
+            num_threads = 10
             solver_type = 1  # 0: pgs, 1: tgs
             num_position_iterations = 4
             num_velocity_iterations = 0
@@ -285,7 +285,7 @@ class WheeledBipedalCfgPPO(BaseConfig):
         # only for ActorCriticSequence
         num_encoder_obs = (WheeledBipedalCfg.env.obs_history_length *
                            WheeledBipedalCfg.env.num_observations)
-        latent_dim = 3  # at least 3 to estimate base linear velocity
+        latent_dim = 4  # at least 3 to estimate base linear velocity
         encoder_hidden_dims = [128, 64]
 
     class algorithm:

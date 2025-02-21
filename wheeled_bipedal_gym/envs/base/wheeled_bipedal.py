@@ -432,11 +432,11 @@ class WheeledBipedal(BaseTask):
             self.privileged_obs_buf = torch.cat(
                 (
                     self.base_lin_vel * self.obs_scales.lin_vel,
+                    heights,
                     self.obs_buf,
                     self.last_actions[:, :, 0],
                     self.last_actions[:, :, 1],
                     self.dof_acc * self.obs_scales.dof_acc,
-                    heights,
                     self.torques * self.obs_scales.torque,
                     (self.base_mass - self.base_mass.mean()).view(
                         self.num_envs, 1),
@@ -1148,7 +1148,7 @@ class WheeledBipedal(BaseTask):
             np.ceil(self.cfg.domain_rand.delay_ms_range[1] / 1000 /
                     self.sim_params.dt))
         self.action_fifo = torch.zeros(
-            (self.num_envs, delay_max, self.cfg.env.num_actions),
+            (self.num_envs, delay_max + 1, self.cfg.env.num_actions),
             dtype=torch.float,
             device=self.device,
             requires_grad=False,

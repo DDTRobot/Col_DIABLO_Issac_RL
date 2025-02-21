@@ -165,7 +165,7 @@ class OnPolicyRunner:
                     critic_obs__ = critic_obs
                 self.alg.compute_returns(critic_obs__)
 
-            mean_value_loss, mean_surrogate_loss, mean_kl, mean_extra_loss = (
+            mean_value_loss, mean_surrogate_loss, mean_kl, mean_extra_loss, v_avg_diff_x, v_avg_diff_y, v_avg_diff_z = (
                 self.alg.update()
             )
             stop = time.time()
@@ -206,10 +206,17 @@ class OnPolicyRunner:
             / (locs["collection_time"] + locs["learn_time"])
         )
 
+        self.writer.add_scalar("Encoder/v_avg_diff_x", locs["v_avg_diff_x"] / self.env.cfg.normalization.obs_scales.lin_vel, locs["it"])
+        self.writer.add_scalar("Encoder/v_avg_diff_y", locs["v_avg_diff_y"] / self.env.cfg.normalization.obs_scales.lin_vel, locs["it"])
+        self.writer.add_scalar("Encoder/v_avg_diff_z", locs["v_avg_diff_z"] / self.env.cfg.normalization.obs_scales.lin_vel, locs["it"])
+        # self.writer.add_scalar("Encoder/base_height_diff", locs["base_height_diff"] / self.env.cfg.normalization.obs_scales.height_measurements, locs["it"])
+        self.writer.add_scalar("Encoder/mean_est_loss", locs["mean_extra_loss"], locs["it"])
+
         self.writer.add_scalar(
             "Loss/value_function", locs["mean_value_loss"], locs["it"]
         )
         self.writer.add_scalar("Loss/encoder", locs["mean_extra_loss"], locs["it"])
+
         self.writer.add_scalar(
             "Loss/surrogate", locs["mean_surrogate_loss"], locs["it"]
         )

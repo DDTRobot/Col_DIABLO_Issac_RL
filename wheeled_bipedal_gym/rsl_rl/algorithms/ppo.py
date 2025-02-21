@@ -254,6 +254,9 @@ class PPO:
 
         num_updates_extra = 0
         mean_extra_loss = 0
+
+        velocity_diff_accum = None
+
         if self.extra_optimizer is not None:
             generator = self.storage.encoder_mini_batch_generator(
                 self.num_mini_batches, self.num_learning_epochs
@@ -261,35 +264,54 @@ class PPO:
             for next_obs_batch, critic_obs_batch, obs_history_batch in generator:
                 if self.actor_critic.is_sequence:
                     latent_batch = self.actor_critic.encode(obs_history_batch)
-                    vel_est_loss = (
-                        (latent_batch[:, :3] - critic_obs_batch[:, :3]).pow(2).mean()
-                    )
+
+                    vel_diff = latent_batch[:, :3] - critic_obs_batch[:, :3]
+                    vel_est_loss = vel_diff.pow(2).mean()
+
+                    velocity_abs_diff = torch.abs(vel_diff).mean(dim=0)
+
                     if self.actor_critic.latent_dim > 3:
-                        obs_denoise_loss = (
-                            (
-                                latent_batch[:, 3 : self.actor_critic.latent_dim]
-                                - critic_obs_batch[:, 3 : self.actor_critic.latent_dim]
-                            )
-                            .pow(2)
-                            .mean()
-                        )
+                        obs_diff = latent_batch[:, 3 : self.actor_critic.latent_dim] - critic_obs_batch[:, 3 : self.actor_critic.latent_dim]
+                        obs_denoise_loss = obs_diff.pow(2).mean()
                         extra_loss = vel_est_loss + obs_denoise_loss
                     else:
                         extra_loss = vel_est_loss
 
-                self.extra_optimizer.zero_grad()
-                extra_loss.backward()
-                nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
-                self.extra_optimizer.step()
+                    mean_extra_loss += extra_loss.item()
+                    num_updates_extra += 1
 
-                mean_extra_loss += extra_loss.item()
-                num_updates_extra += 1
+                    if velocity_diff_accum is None:
+                        velocity_diff_accum = velocity_abs_diff.detach().cpu().numpy()
+                    else:
+                        velocity_diff_accum += velocity_abs_diff.detach().cpu().numpy()
+
+                    self.extra_optimizer.zero_grad()
+                    extra_loss.backward()
+                    nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
+                    self.extra_optimizer.step()
+
+        if num_updates_extra > 0:
+            mean_extra_loss /= num_updates_extra
+            velocity_debug = velocity_diff_accum / num_updates_extra
+            v_avg_diff_x = velocity_debug[0]
+            v_avg_diff_y = velocity_debug[1]
+            v_avg_diff_z = velocity_debug[2]
+        else:
+            v_avg_diff_x = None
+            v_avg_diff_y = None
+            v_avg_diff_z = None
 
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
         mean_kl /= num_updates
-        if num_updates_extra > 0:
-            mean_extra_loss /= num_updates_extra
         self.storage.clear()
 
-        return (mean_value_loss, mean_surrogate_loss, mean_kl, mean_extra_loss)
+        return (
+            mean_value_loss,
+            mean_surrogate_loss,
+            mean_kl,
+            mean_extra_loss,
+            v_avg_diff_x,
+            v_avg_diff_y,
+            v_avg_diff_z
+        )
