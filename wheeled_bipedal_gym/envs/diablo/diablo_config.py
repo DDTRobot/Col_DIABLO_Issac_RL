@@ -43,7 +43,6 @@ class DiabloCfg(WheeledBipedalCfg):
         curriculum = True
         static_friction = 0.8
         dynamic_friction = 0.8
-        # TODO: 测试不同的地面friction对最后效果的影响
         restitution = 0.5
         # rough terrain only:
         measure_heights = True
@@ -112,7 +111,7 @@ class DiabloCfg(WheeledBipedalCfg):
         decimation = 2
         pos_action_scale = 0.5
         vel_action_scale = 10.0
-        use_feedforward = True
+        use_feedforward = False
         feedforward_force = 60.0
 
     class asset(WheeledBipedalCfg.asset):
@@ -149,8 +148,8 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_default_dof_pos_range = [-0.02, 0.02]
         randomize_action_delay = True
         delay_ms_range = [0, 10]
-        action_noise = 0.02 # 0.02
-        action_inertia = 0.1 # 0.1
+        action_noise = 0.02
+        action_inertia = 0.1
 
     class rewards(WheeledBipedalCfg.rewards):
 
