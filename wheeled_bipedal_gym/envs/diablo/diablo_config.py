@@ -76,7 +76,7 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class commands(WheeledBipedalCfg.commands):
         curriculum = True
-        basic_max_curriculum = 1.5
+        basic_max_curriculum = 3
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
         num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
@@ -85,7 +85,7 @@ class DiabloCfg(WheeledBipedalCfg):
 
         class ranges(WheeledBipedalCfg.commands.ranges):
             lin_vel_x = [ -0.1, 0.1 ]  # min max [m/s]
-            ang_vel_yaw = [-1.0, 1.0]  # min max [rad/s]
+            ang_vel_yaw = [-3.14, 3.14]  # min max [rad/s]
             height = [0.15, 0.35]
             heading = [-3.14, 3.14]
 
@@ -135,9 +135,9 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_base_com = True
         rand_com_vec = [0.05, 0.05, 0.05]
         push_robots = True
-        push_interval_s = 8
+        push_interval_s = 5
         max_push_vel_xy = 2.0
-        max_push_vel_z = 0.0
+        max_push_vel_z = 0.5
         randomize_Kp = True
         randomize_Kp_range = [0.9, 1.1]
         randomize_Kd = True

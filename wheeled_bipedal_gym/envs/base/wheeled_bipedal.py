@@ -1697,6 +1697,8 @@ class WheeledBipedal(BaseTask):
     # ------------ reward functions----------------
     def _reward_lin_vel_z(self):
         # Penalize z axis base linear velocity
+        # base_height_error = torch.square(self.base_height - self.commands[:, 2])
+        # return torch.square(self.base_lin_vel[:, 2]) * base_height_error
         return torch.square(self.base_lin_vel[:, 2])
 
     def _reward_ang_vel_xy(self):
@@ -1887,49 +1889,3 @@ class WheeledBipedal(BaseTask):
         # right_wheel_vel = self.commands[:,0]/2 + self.commands[:,1]
         # return torch.sum(torch.square(self.dof_vel[:, 2] - left_wheel_vel) + torch.square(self.dof_vel[:, 5]) - right_wheel_vel)
         return torch.sum(torch.square(self.dof_vel[:, [2, 5]]), dim=1)
-
-    def _reward_block_l(self):
-        vel_x_des = self.commands[:, 0]
-        vel_yaw_des = self.commands[:, 1]
-        left_wheel_vel_des = vel_x_des / 2 - vel_yaw_des
-        right_wheel_vel_des = vel_x_des / 2 + vel_yaw_des
-        left_wheel_vel_err = left_wheel_vel_des - self.dof_vel[:, 2]
-        right_wheel_vel_err = right_wheel_vel_des - self.dof_vel[:, 5]
-
-        # left_vel_err_condition = abs(left_wheel_vel_err) >= 1.0
-        # right_vel_err_condition = abs(right_wheel_vel_err) >= 1.0
-
-        left_vel_err_condition = True
-        right_vel_err_condition = True
-
-        left_tau_condition = torch.all(abs(self.torques[2]) > 1) and torch.all(
-            abs(self.dof_vel[2]) < 2)
-        right_tau_condition = torch.all(
-            abs(self.torques[5]) > 1) and torch.all(abs(self.dof_vel[5]) < 2)
-
-        # left_wheel_block = torch.all(left_vel_err_condition) and torch.all(left_tau_condition)
-        # right_wheel_block = torch.all(right_vel_err_condition) and torch.all(right_tau_condition)
-
-        left_wheel_block = left_tau_condition
-        right_wheel_block = right_tau_condition
-
-        if left_wheel_block and right_wheel_block:
-            return torch.square(self.L0[:, 0] - self.L0[:, 1]) + torch.square(
-                self.L0_dot[:, 0]) + torch.square(
-                    self.L0_dot[:, 1]) + torch.square(
-                        self.theta0_dot[:, 1]) + torch.square(
-                            self.theta0_dot[:, 0])
-        elif not left_wheel_block and right_wheel_block:
-            return self.L0[:, 1] - self.L0[:, 0] + torch.square(
-                self.L0_dot[:, 1]) + torch.square(self.theta0_dot[:, 1])
-        elif left_wheel_block and not right_wheel_block:
-            return self.L0[:, 0] - self.L0[:, 1] + torch.square(
-                self.L0_dot[:, 0]) + torch.square(self.theta0_dot[:, 0])
-        else:
-            return torch.tensor(0.0)
-
-    # def _reward_block_wheel_tau(self):
-    #     return torch.sum(torch.square(self.dof_vel[:, 2]) + torch.square(self.dof_vel[:, 5]))
-    #
-    # def _reward_block_l_vel(self):
-    #     return torch.sum(torch.square(self.dof_vel[:, 2]) + torch.square(self.dof_vel[:, 5]))

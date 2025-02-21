@@ -44,7 +44,7 @@ class WheeledBipedalCfg(BaseConfig):
         num_actions = 6
         env_spacing = 3.0  # not used with heightfields/trimeshes
         send_timeouts = True  # send time out information to the algorithm
-        episode_length_s = 20  # episode length in seconds
+        episode_length_s = 10  # episode length in seconds
         dof_vel_use_pos_diff = True
         fail_to_terminal_time_s = 1
 
