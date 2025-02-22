@@ -76,17 +76,17 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class commands(WheeledBipedalCfg.commands):
         curriculum = True
-        basic_max_curriculum = 3
+        basic_max_curriculum = 1
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
         num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 3.0  # time before command are changed[s]
-        heading_command = True  # if true: compute ang vel command from heading error
+        heading_command = False  # if true: compute ang vel command from heading error
 
         class ranges(WheeledBipedalCfg.commands.ranges):
             lin_vel_x = [ -0.1, 0.1 ]  # min max [m/s]
-            ang_vel_yaw = [-3.14, 3.14]  # min max [rad/s]
-            height = [0.15, 0.35]
+            ang_vel_yaw = [-1.5, 1.5]  # min max [rad/s]
+            height = [0.14, 0.35]
             heading = [-3.14, 3.14]
 
     class init_state(WheeledBipedalCfg.init_state):
@@ -108,7 +108,7 @@ class DiabloCfg(WheeledBipedalCfg):
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
-        decimation = 2
+        decimation = 5
         pos_action_scale = 0.5
         vel_action_scale = 10.0
         use_feedforward = False
@@ -135,9 +135,9 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_base_com = True
         rand_com_vec = [0.05, 0.05, 0.05]
         push_robots = True
-        push_interval_s = 5
+        push_interval_s = 8
         max_push_vel_xy = 2.0
-        max_push_vel_z = 0.5
+        max_push_vel_z = 0.0
         randomize_Kp = True
         randomize_Kp_range = [0.9, 1.1]
         randomize_Kd = True
@@ -146,8 +146,21 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_motor_torque_range = [0.9, 1.1]
         randomize_default_dof_pos = True
         randomize_default_dof_pos_range = [-0.02, 0.02]
+
+        # delay
         randomize_action_delay = True
-        delay_ms_range = [0, 10]
+        delay_ms_range = [0, 5]
+
+        add_joint_delay = False
+        randomize_joint_delay = False
+        randomize_joint_delay_perstep = False
+        joint_delay_ms_range = [0, 2]
+
+        add_imu_delay = False
+        randomize_imu_delay = False
+        randomize_imu_delay_perstep = False
+        imu_delay_ms_range = [0, 2]
+
         action_noise = 0.02
         action_inertia = 0.1
 
@@ -171,7 +184,7 @@ class DiabloCfg(WheeledBipedalCfg):
             action_rate = -0.03
             action_smooth = -0.03
 
-            collision = -2000.0
+            collision = -20.0
             dof_pos_limits = -1.0
             dof_vel_limits = -1.0
 

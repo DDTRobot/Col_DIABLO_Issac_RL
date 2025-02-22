@@ -44,6 +44,7 @@ from typing import Tuple, Dict
 
 from wheeled_bipedal_gym import WHEELED_BIPEDAL_GYM_ROOT_DIR
 from wheeled_bipedal_gym.envs.base.base_task import BaseTask
+from wheeled_bipedal_gym.utils import set_seed
 from wheeled_bipedal_gym.utils.terrain import Terrain
 from wheeled_bipedal_gym.utils.math import (
     quat_apply_yaw,
@@ -107,6 +108,24 @@ class WheeledBipedal(BaseTask):
         self.pre_physics_step()
         for _ in range(self.cfg.control.decimation):
             self.leg_post_physics_step()
+
+            if self.cfg.domain_rand.add_joint_delay:
+                joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
+                self.joint_pos_delay_buffer[:,:,1:] = self.joint_pos_delay_buffer[:,:,:joint_delay_max].clone()
+                self.joint_pos_delay_buffer[:,:,0] = self.dof_pos.clone()
+
+                self.joint_vel_delay_buffer[:,:,1:] = self.joint_vel_delay_buffer[:,:,:joint_delay_max].clone()
+                self.joint_vel_delay_buffer[:,:,0] = self.dof_vel.clone()
+
+            if self.cfg.domain_rand.add_imu_delay:
+                imu_delay_max = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[1] / 1000 / self.sim_params.dt))
+                self.gym.refresh_actor_root_state_tensor(self.sim)
+                self.base_quat[:] = self.root_states[:, 3:7]
+                self.base_ang_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
+                self.projected_gravity[:] = quat_rotate_inverse(self.base_quat, self.gravity_vec)
+                self.imu_delay_buffer[:,:,1:] = self.imu_delay_buffer[:,:,:imu_delay_max].clone()
+                self.imu_delay_buffer[:,:,0] = torch.cat((self.base_ang_vel, self.projected_gravity ), 1).clone()
+
             self.envs_steps_buf += 1
             self.action_fifo = torch.cat(
                 (self.actions.unsqueeze(1), self.action_fifo[:, :-1, :]),
@@ -132,8 +151,7 @@ class WheeledBipedal(BaseTask):
         if self.privileged_obs_buf is not None:
             self.privileged_obs_buf = torch.clip(self.privileged_obs_buf,
                                                  -clip_obs, clip_obs)
-        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        # print(self.obs_buf.shape)
+
         return (
             self.obs_buf,
             self.privileged_obs_buf,
@@ -247,6 +265,37 @@ class WheeledBipedal(BaseTask):
             1] * self.dof_vel[:, [1, 4]]
         return L0_dot, theta0_dot
 
+    def reset_props_delay(self,env_ids):
+        """ random add delay
+        """
+        if self.cfg.domain_rand.add_joint_delay:
+            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(1)
+            joint_delay_min = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[0] / 1000 / self.sim_params.dt))
+            joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
+            self.joint_pos_delay_buffer = self.temple_default_dof_pos.expand(self.num_envs, joint_delay_max + 1, self.num_dof ).clone()
+            self.joint_pos_delay_buffer = self.joint_pos_delay_buffer.transpose(1, 2)
+            self.joint_vel_delay_buffer = torch.zeros(self.num_envs, self.num_actions, joint_delay_max + 1, device=self.device)
+
+            if self.cfg.domain_rand.randomize_joint_delay:
+                self.joint_delay_timestep = torch.randint(joint_delay_min, joint_delay_max + 1, (self.num_envs,),device=self.device)
+                if self.cfg.domain_rand.randomize_joint_delay_perstep:
+                    self.last_joint_delay_timestep = torch.ones(self.num_envs,device=self.device,dtype=int) * joint_delay_max
+
+            else:
+                self.joint_delay_timestep = torch.ones(self.num_envs,device=self.device) * joint_delay_max
+
+        if self.cfg.domain_rand.add_imu_delay:
+            self.imu_delay_buffer[env_ids, :, :] = 0.0
+            imu_delay_min = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[0] / 1000 / self.sim_params.dt))
+            imu_delay_max = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[1] / 1000 / self.sim_params.dt))
+            self.imu_delay_timestep = torch.zeros(self.num_envs, 6, imu_delay_max + 1,device=self.device)
+            if self.cfg.domain_rand.randomize_imu_delay:
+                self.imu_delay_timestep = torch.randint(imu_delay_min, imu_delay_max + 1, (self.num_envs,),device=self.device)
+                if self.cfg.domain_rand.randomize_imu_delay_perstep:
+                    self.last_imu_delay_timestep = torch.ones(self.num_envs,device=self.device,dtype=int) * imu_delay_max
+            else:
+                self.imu_delay_timestep = torch.ones(self.num_envs,device=self.device) * imu_delay_max
+
     def check_termination(self):
         """Check if environments need to be reset"""
         fail_buf = torch.any(
@@ -308,6 +357,8 @@ class WheeledBipedal(BaseTask):
         self._resample_commands(env_ids)
 
         # reset buffers
+        self.reset_props_delay(env_ids)
+
         self.last_actions[env_ids] = 0.0
         self.last_dof_vel[env_ids] = 0.0
         self.feet_air_time[env_ids] = 0.0
@@ -381,16 +432,42 @@ class WheeledBipedal(BaseTask):
 
     def compute_proprioception_observations(self):
         # note that observation noise need to modified accordingly !!!
-        # Let the wheel pos to be zero!!!!
-        self.dof_pos[:, [2, 5]] = 0.
+        if self.cfg.domain_rand.add_joint_delay:
+            if self.cfg.domain_rand.randomize_joint_delay_perstep:
+                joint_delay_min = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[0] / 1000 / self.sim_params.dt))
+                joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
+                self.joint_delay_timestep = torch.randint(joint_delay_min, joint_delay_max + 1, (self.num_envs,),device=self.device)
+                cond = self.joint_delay_timestep > self.last_joint_delay_timestep + 1
+                self.joint_delay_timestep[cond] = self.last_joint_delay_timestep[cond] + 1
+                self.last_joint_delay_timestep = self.joint_delay_timestep.clone()
+            self.delayed_dof_pos = self.joint_pos_delay_buffer[torch.arange(self.num_envs), :, self.joint_delay_timestep.long()]
+            self.delayed_dof_vel = self.joint_vel_delay_buffer[torch.arange(self.num_envs), :, self.joint_delay_timestep.long()]
+        else:
+            self.delayed_dof_pos = self.dof_pos
+            self.delayed_dof_vel = self.dof_vel
+
+        if self.cfg.domain_rand.add_imu_delay:
+            if self.cfg.domain_rand.randomize_imu_delay_perstep:
+                imu_delay_min = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[0] / 1000 / self.sim_params.dt))
+                imu_delay_max = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[1] / 1000 / self.sim_params.dt))
+                self.imu_delay_timestep = torch.randint(imu_delay_min, imu_delay_max + 1,(self.num_envs,),device=self.device)
+                cond = self.imu_delay_timestep > self.last_imu_delay_timestep + 1
+                self.imu_delay_timestep[cond] = self.last_imu_delay_timestep[cond] + 1
+                self.last_imu_delay_timestep = self.imu_delay_timestep.clone()
+            self.delayed_imu = self.imu_delay_buffer[torch.arange(self.num_envs), :, self.imu_delay_timestep.long()]
+            self.delayed_base_ang_vel = self.delayed_imu[:,:3].clone()
+            self.delayed_projected_gravity = self.delayed_imu[:,-3:].clone()
+        else:
+            self.delayed_base_ang_vel = self.base_ang_vel[:,:3]
+            self.delayed_projected_gravity = self.projected_gravity
+
         obs_buf = torch.cat(
             (
-                self.base_ang_vel * self.obs_scales.ang_vel,
-                self.projected_gravity,
+                self.delayed_base_ang_vel * self.obs_scales.ang_vel,
+                self.delayed_projected_gravity,
                 self.commands[:, :3] * self.commands_scale,
-                (self.dof_pos - self.default_dof_pos) *
-                self.obs_scales.dof_pos,
-                self.dof_vel * self.obs_scales.dof_vel,
+                (self.delayed_dof_pos[:, [0,1,3,4]] - self.default_dof_pos[:, [0,1,3,4]]) * self.obs_scales.dof_pos,
+                self.delayed_dof_vel * self.obs_scales.dof_vel,
                 self.actions,
             ),
             dim=-1,
@@ -429,11 +506,21 @@ class WheeledBipedal(BaseTask):
                 -1,
                 1.0,
             ) * self.obs_scales.height_measurements)
+
+            self.base_height_obs = self.base_height.unsqueeze(1)
             self.privileged_obs_buf = torch.cat(
                 (
                     self.base_lin_vel * self.obs_scales.lin_vel,
+                    self.base_height_obs * self.obs_scales.height_measurements,
+                    self.base_ang_vel * self.obs_scales.ang_vel,
+                    self.projected_gravity,
+                    self.commands[:, :3] * self.commands_scale,
+                    (self.dof_pos[:, [0,1,3,4]] - self.default_dof_pos[:, [0,1,3,4]]) * self.obs_scales.dof_pos,
+                    self.dof_vel * self.obs_scales.dof_vel,
+                    self.actions,
                     heights,
-                    self.obs_buf,
+                    self.L0, # 2
+                    self.theta0, # 2
                     self.last_actions[:, :, 0],
                     self.last_actions[:, :, 1],
                     self.dof_acc * self.obs_scales.dof_acc,
@@ -441,9 +528,9 @@ class WheeledBipedal(BaseTask):
                     (self.base_mass - self.base_mass.mean()).view(
                         self.num_envs, 1),
                     self.base_com,
-                    self.default_dof_pos - self.raw_default_dof_pos,
-                    self.friction_coef.view(self.num_envs, 1),
-                    self.restitution_coef.view(self.num_envs, 1),
+                    # self.default_dof_pos - self.raw_default_dof_pos,
+                    # self.friction_coef.view(self.num_envs, 1),
+                    # self.restitution_coef.view(self.num_envs, 1),
                 ),
                 dim=-1,
             )
@@ -1144,9 +1231,7 @@ class WheeledBipedal(BaseTask):
             device=self.device,
             requires_grad=False,
         )
-        delay_max = np.int64(
-            np.ceil(self.cfg.domain_rand.delay_ms_range[1] / 1000 /
-                    self.sim_params.dt))
+        delay_max = np.int64(np.ceil(self.cfg.domain_rand.delay_ms_range[1] / 1000 /self.sim_params.dt))
         self.action_fifo = torch.zeros(
             (self.num_envs, delay_max + 1, self.cfg.env.num_actions),
             dtype=torch.float,
@@ -1185,6 +1270,34 @@ class WheeledBipedal(BaseTask):
             device=self.device,
             requires_grad=False,
         )
+
+        if self.cfg.domain_rand.add_joint_delay:
+            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(1)
+            joint_delay_min = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[0] / 1000 / self.sim_params.dt))
+            joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
+            self.joint_pos_delay_buffer = self.temple_default_dof_pos.expand(self.num_envs, joint_delay_max + 1, self.num_dof ).clone()
+            self.joint_pos_delay_buffer = self.joint_pos_delay_buffer.transpose(1, 2)
+            self.joint_vel_delay_buffer = torch.zeros(self.num_envs, self.num_actions, joint_delay_max + 1, device=self.device)
+
+            if self.cfg.domain_rand.randomize_joint_delay:
+                self.joint_delay_timestep = torch.randint(joint_delay_min, joint_delay_max + 1, (self.num_envs,),device=self.device)
+                if self.cfg.domain_rand.randomize_joint_delay_perstep:
+                    self.last_joint_delay_timestep = torch.ones(self.num_envs,device=self.device,dtype=int) * joint_delay_max
+
+            else:
+                self.joint_delay_timestep = torch.ones(self.num_envs,device=self.device) * joint_delay_max
+
+        if self.cfg.domain_rand.add_imu_delay:
+            imu_delay_min = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[0] / 1000 / self.sim_params.dt))
+            imu_delay_max = np.int64(np.ceil(self.cfg.domain_rand.imu_delay_ms_range[1] / 1000 / self.sim_params.dt))
+            self.imu_delay_buffer = torch.zeros(self.num_envs, 6, imu_delay_max + 1,device=self.device)
+            if self.cfg.domain_rand.randomize_imu_delay:
+                self.imu_delay_timestep = torch.randint(imu_delay_min, imu_delay_max + 1, (self.num_envs,),device=self.device)
+                if self.cfg.domain_rand.randomize_imu_delay_perstep:
+                    self.last_imu_delay_timestep = torch.ones(self.num_envs,device=self.device,dtype=int) * imu_delay_max
+            else:
+                self.imu_delay_timestep = torch.ones(self.num_envs,device=self.device) * imu_delay_max
+
         for i in range(self.num_dofs):
             name = self.dof_names[i]
             angle = self.cfg.init_state.default_joint_angles[name]

@@ -35,16 +35,16 @@ class WheeledBipedalCfg(BaseConfig):
 
     class env:
         num_envs = 4096
-        num_observations = 27
+        num_observations = 25
         num_privileged_obs = (
-                num_observations + 7 * 11 + 3 + 6 * 5 + 3 + 3
+                4 + num_observations + 7 * 11 + 2 + 2 + 6 * 4 + 4# total: latent:4, obs, heights:77, action*2+acc+torque:6*4, base: 4
         )  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         obs_history_length = 5  # number of observations stacked together
         obs_history_dec = 1
         num_actions = 6
         env_spacing = 3.0  # not used with heightfields/trimeshes
         send_timeouts = True  # send time out information to the algorithm
-        episode_length_s = 10  # episode length in seconds
+        episode_length_s = 20  # episode length in seconds
         dof_vel_use_pos_diff = True
         fail_to_terminal_time_s = 1
 
@@ -175,8 +175,20 @@ class WheeledBipedalCfg(BaseConfig):
         randomize_motor_torque_range = [0.9, 1.1]
         randomize_default_dof_pos = True
         randomize_default_dof_pos_range = [-0.3, 0.3]
+
+        # delay
         randomize_action_delay = True
         delay_ms_range = [0, 5]
+
+        add_joint_delay = True
+        randomize_joint_delay = True
+        randomize_joint_delay_perstep = False
+        joint_delay_ms_range = [0, 2] # 1~2ms
+
+        add_imu_delay = True
+        randomize_imu_delay = True
+        randomize_imu_delay_perstep = False
+        imu_delay_ms_range = [0, 2] # 实际10~22ms
 
         action_noise = 0.02 # 0.02
         action_inertia = 0.1 # 0.1

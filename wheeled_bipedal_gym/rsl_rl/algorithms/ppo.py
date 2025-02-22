@@ -252,9 +252,9 @@ class PPO:
             mean_kl += kl_mean.item()
             num_updates += 1
 
-        num_updates_extra = 0
-        mean_extra_loss = 0
-
+        num_updates_extra = 0.0
+        mean_extra_loss = 0.0
+        height_diff_accum = 0.0
         velocity_diff_accum = None
 
         if self.extra_optimizer is not None:
@@ -268,12 +268,13 @@ class PPO:
                     vel_diff = latent_batch[:, :3] - critic_obs_batch[:, :3]
                     vel_est_loss = vel_diff.pow(2).mean()
 
-                    velocity_abs_diff = torch.abs(vel_diff).mean(dim=0)
+                    velocity_abs_diff = vel_diff.pow(2).mean(dim=0)
 
                     if self.actor_critic.latent_dim > 3:
                         obs_diff = latent_batch[:, 3 : self.actor_critic.latent_dim] - critic_obs_batch[:, 3 : self.actor_critic.latent_dim]
                         obs_denoise_loss = obs_diff.pow(2).mean()
                         extra_loss = vel_est_loss + obs_denoise_loss
+                        height_diff_accum += obs_denoise_loss
                     else:
                         extra_loss = vel_est_loss
 
@@ -296,10 +297,12 @@ class PPO:
             v_avg_diff_x = velocity_debug[0]
             v_avg_diff_y = velocity_debug[1]
             v_avg_diff_z = velocity_debug[2]
+            h_avg_diff =  height_diff_accum / num_updates_extra
         else:
             v_avg_diff_x = None
             v_avg_diff_y = None
             v_avg_diff_z = None
+            h_avg_diff = None
 
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
@@ -313,5 +316,6 @@ class PPO:
             mean_extra_loss,
             v_avg_diff_x,
             v_avg_diff_y,
-            v_avg_diff_z
+            v_avg_diff_z,
+            h_avg_diff
         )
