@@ -76,15 +76,15 @@ class DiabloCfg(WheeledBipedalCfg):
 
     class commands(WheeledBipedalCfg.commands):
         curriculum = True
-        basic_max_curriculum = 1
+        basic_max_curriculum = 1.5
         advanced_max_curriculum = 1.5
         curriculum_threshold = 0.7
         num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
-        resampling_time = 3.0  # time before command are changed[s]
-        heading_command = False  # if true: compute ang vel command from heading error
+        resampling_time = 6.0  # time before command are changed[s]
+        heading_command = True  # if true: compute ang vel command from heading error
 
         class ranges(WheeledBipedalCfg.commands.ranges):
-            lin_vel_x = [ -0.1, 0.1 ]  # min max [m/s]
+            lin_vel_x = [ -0.5, 0.5 ]  # min max [m/s]
             ang_vel_yaw = [-1.5, 1.5]  # min max [rad/s]
             height = [0.14, 0.35]
             heading = [-3.14, 3.14]
@@ -103,15 +103,15 @@ class DiabloCfg(WheeledBipedalCfg):
     class control(WheeledBipedalCfg.control):
         control_type = "P"  # P: position, V: velocity, T: torques
         # PD Drive parameters:
-        stiffness = {"hip": 20.0, "knee": 25.0, "wheel": 0}  # [N*m/rad]
-        damping = {"hip": 0.12, "knee": 0.1, "wheel": 0.22}  # [N*m*s/rad]
+        stiffness = {"hip": 15.0, "knee": 18.0, "wheel": 0}  # [N*m/rad]
+        damping = {"hip": 0.3, "knee": 0.2, "wheel": 0.3}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 5
         pos_action_scale = 0.5
         vel_action_scale = 10.0
-        use_feedforward = False
+        use_feedforward = True
         feedforward_force = 60.0
 
     class asset(WheeledBipedalCfg.asset):
@@ -151,15 +151,15 @@ class DiabloCfg(WheeledBipedalCfg):
         randomize_action_delay = True
         delay_ms_range = [0, 5]
 
-        add_joint_delay = False
-        randomize_joint_delay = False
+        add_joint_delay = True
+        randomize_joint_delay = True
         randomize_joint_delay_perstep = False
-        joint_delay_ms_range = [0, 2]
+        joint_delay_ms_range = [0, 5]
 
-        add_imu_delay = False
-        randomize_imu_delay = False
+        add_imu_delay = True
+        randomize_imu_delay = True
         randomize_imu_delay_perstep = False
-        imu_delay_ms_range = [0, 2]
+        imu_delay_ms_range = [0, 5]
 
         action_noise = 0.02
         action_inertia = 0.1
@@ -215,7 +215,7 @@ class DiabloCfg(WheeledBipedalCfg):
             torque = 0.05
 
         clip_observations = 100.0
-        clip_actions = 100.0
+        clip_actions = 50.0
 
     class noise(WheeledBipedalCfg.noise):
         add_noise = True

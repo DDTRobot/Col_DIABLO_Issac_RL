@@ -37,7 +37,7 @@ class WheeledBipedalCfg(BaseConfig):
         num_envs = 4096
         num_observations = 25
         num_privileged_obs = (
-                4 + num_observations + 7 * 11 + 2 + 2 + 6 * 4 + 4# total: latent:4, obs, heights:77, action*2+acc+torque:6*4, base: 4
+                4 + num_observations + 7 * 11 + 2 + 2 + 6 * 4 + 4 + 6 + 2# total: latent:4, obs, heights:77, action*2+acc+torque:6*4, base: 4
         )  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         obs_history_length = 5  # number of observations stacked together
         obs_history_dec = 1
