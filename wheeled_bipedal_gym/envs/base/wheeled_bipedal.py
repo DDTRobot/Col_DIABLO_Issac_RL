@@ -266,15 +266,15 @@ class WheeledBipedal(BaseTask):
         return L0_dot, theta0_dot
 
     def reset_props_delay(self,env_ids):
-        """ random add delay
+        """ random add delay notice not all envs need reset!
         """
         if self.cfg.domain_rand.add_joint_delay:
-            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(1)
+            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(2)
             joint_delay_min = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[0] / 1000 / self.sim_params.dt))
             joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
-            self.joint_pos_delay_buffer = self.temple_default_dof_pos.expand(self.num_envs, joint_delay_max + 1, self.num_dof ).clone()
-            self.joint_pos_delay_buffer = self.joint_pos_delay_buffer.transpose(1, 2)
-            self.joint_vel_delay_buffer = torch.zeros(self.num_envs, self.num_actions, joint_delay_max + 1, device=self.device)
+            joint_pos_delay_buffer_init = self.temple_default_dof_pos.expand(self.num_envs, self.num_dof , joint_delay_max + 1).clone()
+            self.joint_pos_delay_buffer[env_ids, :, :] = joint_pos_delay_buffer_init[env_ids,:, :]
+            self.joint_vel_delay_buffer[env_ids, :, :] = 0.0
 
             if self.cfg.domain_rand.randomize_joint_delay:
                 self.joint_delay_timestep = torch.randint(joint_delay_min, joint_delay_max + 1, (self.num_envs,),device=self.device)
@@ -528,9 +528,9 @@ class WheeledBipedal(BaseTask):
                     (self.base_mass - self.base_mass.mean()).view(
                         self.num_envs, 1),
                     self.base_com,
-                    # self.default_dof_pos - self.raw_default_dof_pos,
-                    # self.friction_coef.view(self.num_envs, 1),
-                    # self.restitution_coef.view(self.num_envs, 1),
+                    self.default_dof_pos - self.raw_default_dof_pos,
+                    self.friction_coef.view(self.num_envs, 1),
+                    self.restitution_coef.view(self.num_envs, 1),
                 ),
                 dim=-1,
             )
@@ -1272,12 +1272,11 @@ class WheeledBipedal(BaseTask):
         )
 
         if self.cfg.domain_rand.add_joint_delay:
-            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(1)
+            self.temple_default_dof_pos = self.default_dof_pos.unsqueeze(2)
             joint_delay_min = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[0] / 1000 / self.sim_params.dt))
             joint_delay_max = np.int64(np.ceil(self.cfg.domain_rand.joint_delay_ms_range[1] / 1000 / self.sim_params.dt))
-            self.joint_pos_delay_buffer = self.temple_default_dof_pos.expand(self.num_envs, joint_delay_max + 1, self.num_dof ).clone()
-            self.joint_pos_delay_buffer = self.joint_pos_delay_buffer.transpose(1, 2)
-            self.joint_vel_delay_buffer = torch.zeros(self.num_envs, self.num_actions, joint_delay_max + 1, device=self.device)
+            self.joint_pos_delay_buffer = self.temple_default_dof_pos.expand(self.num_envs, self.num_dof, joint_delay_max + 1).clone()
+            self.joint_vel_delay_buffer = torch.zeros(self.num_envs, self.num_dof, joint_delay_max + 1, device=self.device)
 
             if self.cfg.domain_rand.randomize_joint_delay:
                 self.joint_delay_timestep = torch.randint(joint_delay_min, joint_delay_max + 1, (self.num_envs,),device=self.device)
