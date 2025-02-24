@@ -35,9 +35,9 @@ class WheeledBipedalCfg(BaseConfig):
 
     class env:
         num_envs = 4096
-        num_observations = 27
+        num_observations = 25
         num_privileged_obs = (
-                num_observations + 7 * 11 + 3 + 6 * 5 + 3 + 3
+                4 + num_observations + 7 * 11 + 2 + 2 + 6 * 4 + 4 + 6 + 2# total: latent:4, obs, heights:77, action*2+acc+torque:6*4, base: 4
         )  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         obs_history_length = 5  # number of observations stacked together
         obs_history_dec = 1
@@ -116,14 +116,15 @@ class WheeledBipedalCfg(BaseConfig):
     class control:
         control_type = "P"  # P: position, V: velocity, T: torques
         # PD Drive parameters:
-        stiffness = {"hip": 30.0, "knee": 40.0, "wheel": 0}  # [N*m/rad]
-        damping = {"hip": 0.5, "knee": 0.7, "wheel": 0.3}  # [N*m*s/rad]
+        stiffness = {"hip": 20.0, "knee": 25.0, "wheel": 0}  # [N*m/rad]
+        damping = {"hip": 0.12, "knee": 0.1, "wheel": 0.22}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
-        decimation = 2
+        decimation = 5
         pos_action_scale = 0.5
         vel_action_scale = 10.0
+        use_feedforward = True
         feedforward_force = 60.0
 
     class asset:
@@ -165,6 +166,7 @@ class WheeledBipedalCfg(BaseConfig):
         push_robots = True
         push_interval_s = 7
         max_push_vel_xy = 2.0
+        max_push_vel_z = 1.0
         randomize_Kp = True
         randomize_Kp_range = [0.9, 1.1]
         randomize_Kd = True
@@ -173,13 +175,27 @@ class WheeledBipedalCfg(BaseConfig):
         randomize_motor_torque_range = [0.9, 1.1]
         randomize_default_dof_pos = True
         randomize_default_dof_pos_range = [-0.3, 0.3]
-        randomize_action_delay = True
-        delay_ms_range = [0, 10]
 
+        # delay
+        randomize_action_delay = True
+        delay_ms_range = [0, 5]
+
+        add_joint_delay = True
+        randomize_joint_delay = True
+        randomize_joint_delay_perstep = False
+        joint_delay_ms_range = [0, 2] # 1~2ms
+
+        add_imu_delay = True
+        randomize_imu_delay = True
+        randomize_imu_delay_perstep = False
+        imu_delay_ms_range = [0, 2] # 实际10~22ms
+
+        action_noise = 0.02 # 0.02
+        action_inertia = 0.1 # 0.1
     class rewards:
 
         class scales:
-            tracking_lin_vel = 1.0
+            tracking_lin_vel = 3.0
             tracking_lin_vel_enhance = 1
             tracking_ang_vel = 1.0
 
@@ -247,7 +263,7 @@ class WheeledBipedalCfg(BaseConfig):
         lookat = [0, 0, 0]  # [m]
 
     class sim:
-        dt = 0.005
+        dt = 0.002
         substeps = 1
         gravity = [0.0, 0.0, -9.81]  # [m/s^2]
         up_axis = 1  # 0 is y, 1 is z
@@ -259,7 +275,7 @@ class WheeledBipedalCfg(BaseConfig):
             num_velocity_iterations = 0
             contact_offset = 0.01  # [m]
             rest_offset = 0.0  # [m]
-            bounce_threshold_velocity = 0.5  # 0.5 [m/s]
+            bounce_threshold_velocity = 0.1  # 0.5 [m/s]
             max_depenetration_velocity = 1.0
             max_gpu_contact_pairs = 2**23  # 2**24 -> needed for 8000 envs and more
             default_buffer_size_multiplier = 5
@@ -273,7 +289,7 @@ class WheeledBipedalCfgPPO(BaseConfig):
     runner_class_name = "OnPolicyRunner"
 
     class policy:
-        init_noise_std = 0.5
+        init_noise_std = 1.0
         actor_hidden_dims = [128, 64, 32]
         critic_hidden_dims = [256, 128, 64]
         activation = "elu"  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
@@ -281,7 +297,7 @@ class WheeledBipedalCfgPPO(BaseConfig):
         # only for ActorCriticSequence
         num_encoder_obs = (WheeledBipedalCfg.env.obs_history_length *
                            WheeledBipedalCfg.env.num_observations)
-        latent_dim = 3  # at least 3 to estimate base linear velocity
+        latent_dim = 4  # at least 3 to estimate base linear velocity
         encoder_hidden_dims = [128, 64]
 
     class algorithm:

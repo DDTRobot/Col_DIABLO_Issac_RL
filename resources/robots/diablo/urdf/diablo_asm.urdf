@@ -150,7 +150,7 @@
     <parent link="left_fake_thigh_link"/>
     <child link="left_fake_shank_link"/>
     <axis xyz="0 0 1"/>
-    <limit effort="27" lower="-1.57" upper="1.57" velocity="26"/>
+    <limit effort="27" lower="-0.1" upper="2.9" velocity="26"/>
   </joint>
   <joint name="right_fake_hip_joint" type="revolute">
     <origin rpy="1.5708 0.13433 3.1416" xyz="0 -0.18755 0"/>
@@ -164,20 +164,20 @@
     <parent link="right_fake_thigh_link"/>
     <child link="right_fake_shank_link"/>
     <axis xyz="0 0 1"/>
-    <limit effort="27" lower="-1.57" upper="1.57" velocity="26"/>
+    <limit effort="27" lower="-0.1" upper="2.9" velocity="26"/>
   </joint>
   <joint name="left_wheel_joint" type="revolute">
     <origin rpy="0 0 0.13433" xyz="0.14 0 0.025"/>
     <parent link="left_fake_shank_link"/>
     <child link="left_wheel"/>
     <axis xyz="0 0 1"/>
-    <limit effort="5" velocity="26" />
+    <limit effort="27" velocity="26" />
   </joint>
   <joint name="right_wheel_joint" type="revolute">
     <origin rpy="0 0 0.13433" xyz="0.14 0 -0.025"/>
     <parent link="right_fake_shank_link"/>
     <child link="right_wheel"/>
     <axis xyz="0 0 1"/>
-    <limit effort="5" velocity="26" />
+    <limit effort="27" velocity="26" />
   </joint>
 </robot>

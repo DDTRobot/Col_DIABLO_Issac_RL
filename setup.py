@@ -14,7 +14,7 @@ setup(
         "matplotlib",
         "tensorboard",
         "setuptools==59.5.0",
-        "numpy<=1.20.0",
+        "numpy ==1.23.5",
         "GitPython",
         "onnx",
     ],

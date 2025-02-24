@@ -39,6 +39,12 @@ from wheeled_bipedal_gym.utils import get_args, export_policy_as_jit, task_regis
 import numpy as np
 import torch
 
+from wheeled_bipedal_gym.rsl_rl.modules import (
+    ActorCritic,
+    ActorCriticRecurrent,
+    ActorCriticSequence,
+)
+import copy
 
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
@@ -83,8 +89,13 @@ def play(args):
             "exported",
             "policies",
         )
-        export_policy_as_jit(ppo_runner.alg.actor_critic, path)
-        print("Exported policy as jit script to: ", path)
+        if ppo_runner.alg.actor_critic.is_sequence:
+            integrated_policy = IntegratedActorEncoder(ppo_runner.alg.actor_critic)
+            integrated_policy.export(path)
+            print("Exported integrated policy as jit script to: ", path)
+        else:
+            export_policy_as_jit(ppo_runner.alg.actor_critic, path)
+            print("Exported policy as jit script to: ", path)
 
     logger = Logger(env.dt)
     robot_index = 21  # which robot is used for logging
@@ -99,7 +110,7 @@ def play(args):
     img_idx = 0
     latent = None
 
-    CoM_offset_compensate = True
+    CoM_offset_compensate = False
     vel_err_intergral = torch.zeros(env.num_envs, device=env.device)
     vel_cmd = torch.zeros(env.num_envs, device=env.device)
 
@@ -109,8 +120,8 @@ def play(args):
         else:
             actions = policy(obs.detach())
 
-        env.commands[:, 0] = 2.5
-        env.commands[:, 2] = 0.18  # + 0.07 * np.sin(i * 0.01)
+        env.commands[:, 0] = 0.0
+        env.commands[:, 2] = 0.23  # + 0.07 * np.sin(i * 0.01)
         env.commands[:, 3] = 0
 
         if CoM_offset_compensate:
@@ -222,6 +233,23 @@ def play(args):
         elif i == stop_rew_log:
             logger.print_rewards()
 
+class IntegratedActorEncoder(torch.nn.Module):
+    def __init__(self, actor_critic: ActorCriticSequence):
+        super().__init__()
+        self.actor = copy.deepcopy(actor_critic.actor).cpu()
+        self.encoder = copy.deepcopy(actor_critic.encoder).cpu()
+        self.std = copy.deepcopy(actor_critic.std).cpu()
+
+    def forward(self, obs, obs_history):
+        latent = self.encoder(obs_history)
+        action_mean = self.actor(torch.cat([obs, latent], dim=-1))
+        return action_mean, latent
+
+    def export(self, path):
+        path = os.path.join(path, "integrated_policy.pt")
+        self.to("cpu")
+        traced_script_module = torch.jit.script(self)
+        traced_script_module.save(path)
 
 if __name__ == "__main__":
     EXPORT_POLICY = True
